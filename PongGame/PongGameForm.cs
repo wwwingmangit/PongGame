@@ -23,10 +23,8 @@ namespace PongClient
             InitializeGame();
             InitializeTimer();
 
-            // Enable double buffering
+            // Initialize double buffered graphics for faster graphics
             this.DoubleBuffered = true;
-
-            // Initialize buffered graphics
             currentContext = BufferedGraphicsManager.Current;
             myBuffer = currentContext.Allocate(this.CreateGraphics(), this.DisplayRectangle);
         }
@@ -60,23 +58,21 @@ namespace PongClient
 
         private int ConvertToScreenX(decimal gameX)
         {
-            //return (int)((1M + gameX) * (decimal)FormWidth / 2);
             return (int)(gameX / GameBoard.BoardWidth * (decimal)FormWidth + (decimal)FormWidth / 2);
         }
         private int ConvertToScreenY(decimal gameY)
         {
-            //return (int)((1M + gameY) * (decimal)FormHeight / 2);
             return (int)(gameY / GameBoard.BoardHeight * (decimal)FormHeight + (decimal)FormHeight / 2);
         }
 
         private int ConvertToScreenWidth(decimal gameWidth)
         {
-            return (int)(gameWidth * (decimal)FormWidth);
+            return (int)(gameWidth / GameBoard.BoardWidth * (decimal)FormWidth);
         }
 
         private int ConvertToScreenHeight(decimal gameHeight)
         {
-            return (int)(gameHeight * (decimal)FormHeight);
+            return (int)(gameHeight / GameBoard.BoardHeight * (decimal)FormHeight);
         }
 
         private void InitializeTimer()
