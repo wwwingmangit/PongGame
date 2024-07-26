@@ -1,10 +1,27 @@
 using Pong;
+using System;
+using System.Drawing;
+using System.Numerics;
+using System.Reflection.Metadata;
+using System.Windows.Forms;
 
 namespace PongClient
 {
     public partial class PongGameForm : Form
     {
-        private Pong.GameBoard GameBoard = new GameBoard(0.05M, 0.2M, 0.05M, 0.05M);
+        const decimal GAMEBOARD_DEFAULT_WIDTH = 2M;
+        const decimal GAMEBOARD_DEFAULT_HEIGHT = 2M;
+        const decimal BALL_DEFAULT_WIDTH = 0.1M;
+        const decimal BALL_DEFAULT_HEIGHT = 0.1M;
+        const decimal PADDLE_DEFAULT_WIDTH = 0.05M;
+        const decimal PADDLE_DEFAULT_HEIGHT = 0.3M;
+
+        const int UPDATE_INTERVAL_IN_MSEC = (int)(1M/30M * 1000M);
+
+        private Pong.GameBoard2D GameBoard = new Pong.GameBoard2D(new Size2D(GAMEBOARD_DEFAULT_WIDTH, GAMEBOARD_DEFAULT_HEIGHT),
+                                             new Ball2D(new Position2D(), new Speed2D(), new Size2D(BALL_DEFAULT_WIDTH, BALL_DEFAULT_HEIGHT)),
+                                             new Paddle2D(new Position2D(), new Speed2D(), new Size2D(PADDLE_DEFAULT_WIDTH, PADDLE_DEFAULT_HEIGHT)),
+                                             new Paddle2D(new Position2D(), new Speed2D(), new Size2D(PADDLE_DEFAULT_WIDTH, PADDLE_DEFAULT_HEIGHT)));
 
         private Rectangle Paddle1;
         private Rectangle Paddle2;
@@ -15,7 +32,7 @@ namespace PongClient
 
         private System.Windows.Forms.Timer Timer = new System.Windows.Forms.Timer();
 
-        int FormWidth, FormHeight;
+        int ScreenWidth, ScreenHeight;
 
         public PongGameForm()
         {
@@ -23,94 +40,81 @@ namespace PongClient
             InitializeGame();
             InitializeTimer();
 
-            // Enable double buffering
+            // Initialize double buffered graphics for faster graphics
             this.DoubleBuffered = true;
-
-            // Initialize buffered graphics
             currentContext = BufferedGraphicsManager.Current;
             myBuffer = currentContext.Allocate(this.CreateGraphics(), this.DisplayRectangle);
         }
 
         private void InitializeGame()
         {
-            this.Size = new Size(400, 400);
+            this.Size = new System.Drawing.Size(400, 400);
 
-            FormWidth = this.ClientSize.Width;
-            FormHeight = this.ClientSize.Height;
+            ScreenWidth = this.ClientSize.Width;
+            ScreenHeight = this.ClientSize.Height;
 
             // Initialize game elements in screen coordinates
-            Pong.Paddle leftPaddle = GameBoard.LeftPaddle;
-            Pong.Paddle rightPaddle = GameBoard.RightPaddle;
-            Pong.Ball ball = GameBoard.Ball;
+            Paddle1 = CreatScreenRectangle(GameBoard.LeftPaddle.Position, GameBoard.LeftPaddle.Size);
+            Paddle2 = CreatScreenRectangle(GameBoard.RightPaddle.Position, GameBoard.RightPaddle.Size);
+            Ball = CreatScreenRectangle(GameBoard.Ball.Position, GameBoard.Ball.Size);
+        }
 
-            Paddle1 = new Rectangle(ConvertToScreenX(leftPaddle.Position.X) - ConvertToScreenWidth(leftPaddle.Width) / 2,
-                                    ConvertToScreenY(leftPaddle.Position.Y) - ConvertToScreenHeight(leftPaddle.Height) / 2,
-                                    ConvertToScreenWidth(leftPaddle.Width),
-                                    ConvertToScreenHeight(leftPaddle.Height));
-            Paddle2 = new Rectangle(ConvertToScreenX(rightPaddle.Position.X) - ConvertToScreenWidth(rightPaddle.Width) / 2,
-                                    ConvertToScreenY(rightPaddle.Position.Y) - ConvertToScreenHeight(rightPaddle.Height) / 2,
-                                    ConvertToScreenWidth(rightPaddle.Width),
-                                    ConvertToScreenHeight(rightPaddle.Height));
-
-            Ball = new Rectangle(ConvertToScreenX(ball.Position.X) - ConvertToScreenWidth(ball.Width) / 2,
-                                 ConvertToScreenY(ball.Position.Y) - ConvertToScreenHeight(ball.Height) / 2,
-                                 ConvertToScreenWidth(ball.Width),
-                                 ConvertToScreenHeight(ball.Height));
+        private Rectangle CreatScreenRectangle(Position2D position, Size2D size)
+        {
+            return new Rectangle(
+                ConvertToScreenX(position.X) - ConvertToScreenWidth(size.Width) / 2,
+                ConvertToScreenY(position.Y) - ConvertToScreenHeight(size.Height) / 2,
+                ConvertToScreenWidth(size.Width),
+                ConvertToScreenHeight(size.Height)
+            );
+        }
+        private void UpdateScreenRectangle(Position2D position, Size2D size, ref Rectangle screenRect)
+        {
+            screenRect.X = ConvertToScreenX(position.X) - ConvertToScreenWidth(size.Width) / 2;
+            screenRect.Y = ConvertToScreenY(position.Y) - ConvertToScreenHeight(size.Height) / 2;
+            screenRect.Width = ConvertToScreenWidth(size.Width);
+            screenRect.Height = ConvertToScreenHeight(size.Height);
         }
 
         private int ConvertToScreenX(decimal gameX)
         {
-            //return (int)((1M + gameX) * (decimal)FormWidth / 2);
-            return (int)(gameX / GameBoard.BoardWidth * (decimal)FormWidth + (decimal)FormWidth / 2);
+            return (int)(gameX / GameBoard.Size.Width * (decimal)ScreenWidth + (decimal)ScreenWidth / 2);
         }
+
         private int ConvertToScreenY(decimal gameY)
         {
-            //return (int)((1M + gameY) * (decimal)FormHeight / 2);
-            return (int)(gameY / GameBoard.BoardHeight * (decimal)FormHeight + (decimal)FormHeight / 2);
+            return (int)(gameY / GameBoard.Size.Height * (decimal)ScreenHeight + (decimal)ScreenHeight / 2);
         }
 
         private int ConvertToScreenWidth(decimal gameWidth)
         {
-            return (int)(gameWidth * (decimal)FormWidth);
+            return (int)(gameWidth / GameBoard.Size.Width * (decimal)ScreenWidth);
         }
 
         private int ConvertToScreenHeight(decimal gameHeight)
         {
-            return (int)(gameHeight * (decimal)FormHeight);
+            return (int)(gameHeight / GameBoard.Size.Height * (decimal)ScreenHeight);
         }
 
         private void InitializeTimer()
         {
             Timer = new System.Windows.Forms.Timer();
-            Timer.Interval = 1000/30; // Adjust as needed
+            Timer.Interval = 1000 / 30;
             Timer.Tick += new EventHandler(UpdateGame);
             Timer.Start();
         }
 
         private void UpdateGame(object? sender, EventArgs e)
         {
+            // update game
             GameBoard.Update();
 
-            Pong.Paddle leftPaddle = GameBoard.LeftPaddle;
-            Pong.Paddle rightPaddle = GameBoard.RightPaddle;
-            Pong.Ball ball = GameBoard.Ball;
+            // update screen
+            UpdateScreenRectangle(GameBoard.LeftPaddle.Position, GameBoard.LeftPaddle.Size, ref Paddle1);
+            UpdateScreenRectangle(GameBoard.RightPaddle.Position, GameBoard.RightPaddle.Size, ref Paddle2);
+            UpdateScreenRectangle(GameBoard.Ball.Position, GameBoard.Ball.Size, ref Ball);
 
-            Paddle1.X = ConvertToScreenX(leftPaddle.Position.X) - ConvertToScreenWidth(leftPaddle.Width) / 2;
-            Paddle1.Y = ConvertToScreenY(leftPaddle.Position.Y) - ConvertToScreenHeight(leftPaddle.Height) / 2;
-            Paddle1.Width = ConvertToScreenWidth(leftPaddle.Width);
-            Paddle1.Height = ConvertToScreenHeight(leftPaddle.Height);
-
-            Paddle2.X = ConvertToScreenX(rightPaddle.Position.X) - ConvertToScreenWidth(rightPaddle.Width) / 2;
-            Paddle2.Y = ConvertToScreenY(rightPaddle.Position.Y) - ConvertToScreenHeight(rightPaddle.Height) / 2;
-            Paddle2.Width = ConvertToScreenWidth(rightPaddle.Width);
-            Paddle2.Height = ConvertToScreenHeight(rightPaddle.Height);
-
-            Ball.X = ConvertToScreenX(ball.Position.X) - ConvertToScreenWidth(ball.Width) / 2;
-            Ball.Y = ConvertToScreenY(ball.Position.Y) - ConvertToScreenHeight(ball.Height) / 2;
-            Ball.Width = ConvertToScreenWidth(ball.Width); 
-            Ball.Height = ConvertToScreenHeight(ball.Height); 
-
-            // repaint the form
+            // tell to repaint all the form
             this.Invalidate();
         }
 
@@ -140,6 +144,8 @@ namespace PongClient
             {
                 g.DrawString(GameBoard.Score.LeftScore.ToString(), font, Brushes.White, new PointF(this.ClientSize.Width / 4, 10));
                 g.DrawString(GameBoard.Score.RightScore.ToString(), font, Brushes.White, new PointF(3 * this.ClientSize.Width / 4, 10));
+
+                //g.DrawString(GameBoard.PaddleFatigue.ToString("F2"), font, Brushes.White, new PointF(this.ClientSize.Width / 2, 20));
             }
 
             myBuffer.Render(e.Graphics);
@@ -153,9 +159,14 @@ namespace PongClient
                 myBuffer.Dispose();
                 myBuffer = currentContext.Allocate(this.CreateGraphics(), this.DisplayRectangle);
 
-                FormWidth = this.ClientSize.Width;
-                FormHeight = this.ClientSize.Height;
+                ScreenWidth = this.ClientSize.Width;
+                ScreenHeight = this.ClientSize.Height;
             }
+        }
+
+        private void PongGameForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
