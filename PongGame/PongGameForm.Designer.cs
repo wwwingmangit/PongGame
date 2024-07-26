@@ -36,12 +36,11 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
             ClientSize = new Size(384, 361);
-            MaximizeBox = false;
             MdiChildrenMinimizedAnchorBottom = false;
             MinimizeBox = false;
             Name = "PongGameForm";
-            ShowIcon = false;
             Text = "PongGame";
+            Load += PongGameForm_Load;
             ResumeLayout(false);
         }
 
