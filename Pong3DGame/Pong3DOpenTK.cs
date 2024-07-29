@@ -12,9 +12,9 @@ namespace Pong3DOpenTK
         const decimal GAMEBOARD_DEFAULT_WIDTH = 2M;
         const decimal GAMEBOARD_DEFAULT_HEIGHT = 2M;
         const decimal GAMEBOARD_DEFAULT_DEPTH = 2M;
-        const decimal GAMEBALL_DEFAULT_WIDTH = 0.1M;
-        const decimal GAMEBALL_DEFAULT_HEIGHT = 0.1M;
-        const decimal GAMEBALL_DEFAULT_DEPTH = 0.1M;
+        const decimal GAMEBALL_DEFAULT_WIDTH = 0.2M;
+        const decimal GAMEBALL_DEFAULT_HEIGHT = 0.2M;
+        const decimal GAMEBALL_DEFAULT_DEPTH = 0.2M;
         const decimal GAMEBALL_DEFAULT_SPEEDX = 0.05M;
         const decimal GAMEBALL_DEFAULT_SPEEDY = 0.05M;
         const decimal GAMEBALL_DEFAULT_SPEEDZ = 0.05M;
@@ -50,7 +50,6 @@ namespace Pong3DOpenTK
         {
             _stopwatch = new Stopwatch();
         }
-
         protected override void OnLoad()
         {
             base.OnLoad();
@@ -66,11 +65,12 @@ namespace Pong3DOpenTK
             CreateShaders();
 
             _projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45f), ClientSize.X / (float)ClientSize.Y, 0.1f, 100.0f);
-            _view = Matrix4.LookAt(new Vector3(0.0f, 0.0f, (float)GAMEBOARD_DEFAULT_DEPTH * 3f), Vector3.Zero, Vector3.UnitY);
+
+            float cameraDistance = (float)GAMEBOARD_DEFAULT_DEPTH * 3f; // Increase the distance from the box
+            _view = Matrix4.LookAt(new Vector3(0.0f, 0.0f, cameraDistance), Vector3.Zero, Vector3.UnitY);
 
             _stopwatch.Start();
         }
-
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
@@ -81,7 +81,7 @@ namespace Pong3DOpenTK
 
             // Rotate the camera around the Y-axis
             _cameraAngle += 0.01f; // Adjust the speed of rotation
-            float radius = (float)GAMEBOARD_DEFAULT_DEPTH * 3f;
+            float radius = (float)GAMEBOARD_DEFAULT_DEPTH * 2f;
             float camX = (float)Math.Sin(_cameraAngle) * radius;
             float camZ = (float)Math.Cos(_cameraAngle) * radius;
             _view = Matrix4.LookAt(new Vector3(camX, 0.0f, camZ), Vector3.Zero, Vector3.UnitY);
