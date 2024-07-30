@@ -38,7 +38,7 @@ namespace Pong3DOpenTK
         private Vector3 _leftPaddlePosition = new Vector3();
         private Vector3 _rightPaddlePosition = new Vector3();
 
-        private const int TargetFPS = 30;
+        private const int TargetFPS = 60;
         private const double TargetFrameTime = 1.0 / TargetFPS;
         private Stopwatch _stopwatch;
 
@@ -180,7 +180,7 @@ namespace Pong3DOpenTK
             _rightPaddlePosition.Z = (float)(GameBoard.RightPaddle.Position.Z);
 
             // Update score position to be in the middle of the box and facing the camera
-            _scorePosition = new Vector3(0.0f, 0.0f, (float)GAMEBOARD_DEFAULT_DEPTH / 2);
+            _scorePosition = new Vector3(0.0f, (float)GAMEBOARD_DEFAULT_DEPTH / 2, 0.0f);
         }
     }
 }

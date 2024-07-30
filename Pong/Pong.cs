@@ -509,9 +509,9 @@ namespace Pong
             base.ResetParty();
 
             Ball.Position.X = Ball.Position.Y = Ball.Position.Z = 0;
-            Ball.Speed.X = 0.1M * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
-            Ball.Speed.Y = ((decimal)(RandomGenerator.NextDouble()) * 0.1M) * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
-            Ball.Speed.Z = 0.1M * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.X = 0.05M * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.Y = ((decimal)(RandomGenerator.NextDouble()) * 0.05M) * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.Z = 0.05M * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
 
             LeftPaddle.Position.X = MinX + LeftPaddle.Size.Width * 0.7M;
             LeftPaddle.Position.Y = 0;
