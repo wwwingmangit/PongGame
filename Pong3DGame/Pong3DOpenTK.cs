@@ -51,6 +51,8 @@ namespace Pong3DOpenTK
         private Vector3 _leftScorePosition;
         private Vector3 _rightScorePosition;
 
+        private Vector3 _cameraPosition;
+
         public Pong3DOpenTK(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
         {
@@ -85,80 +87,113 @@ namespace Pong3DOpenTK
         {
             base.OnRenderFrame(e);
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            ClearBuffers();
+            UpdateCamera();
+            SetupShaders();
+            RenderGameObjects();
+            RenderScores();
+            SwapBuffersAndLimitFrameRate();
+        }
 
-            // Rotate the camera around the Y-axis
-            _cameraAngle += 0.01f; // Adjust the speed of rotation
+        private void ClearBuffers()
+        {
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        }
+
+        private void UpdateCamera()
+        {
+            _cameraAngle += 0.01f;
             float radius = (float)GAMEBOARD_DEFAULT_DEPTH * 2f;
             float camX = (float)Math.Sin(_cameraAngle) * radius;
             float camZ = (float)Math.Cos(_cameraAngle) * radius;
-            _view = Matrix4.LookAt(new Vector3(camX, 0.0f, camZ), Vector3.Zero, Vector3.UnitY);
+            _cameraPosition = new Vector3(camX, 0.0f, camZ);
+            _view = Matrix4.LookAt(_cameraPosition, Vector3.Zero, Vector3.UnitY);
+        }
 
-            // Use dynamic view and projection
+        private void SetupShaders()
+        {
             GL.UseProgram(_objectShaderProgram);
             GL.UniformMatrix4(GL.GetUniformLocation(_objectShaderProgram, "view"), false, ref _view);
             GL.UniformMatrix4(GL.GetUniformLocation(_objectShaderProgram, "projection"), false, ref _projection);
 
-            // Set metallic white color for objects
+            SetLighting(_cameraPosition);
+        }
+
+        private void SetLighting(Vector3 cameraPosition)
+        {
             Vector3 metallicWhite = new Vector3(0.9f, 0.9f, 0.9f);
             GL.Uniform3(GL.GetUniformLocation(_objectShaderProgram, "lightPos"), new Vector3(1.2f, 1.0f, 2.0f));
-            GL.Uniform3(GL.GetUniformLocation(_objectShaderProgram, "viewPos"), new Vector3(camX, 0.0f, camZ));
+            GL.Uniform3(GL.GetUniformLocation(_objectShaderProgram, "viewPos"), cameraPosition);
             GL.Uniform3(GL.GetUniformLocation(_objectShaderProgram, "lightColor"), new Vector3(1.5f, 1.5f, 1.5f));
+        }
+        private void RenderGameObjects()
+        {
+            RenderBall();
+            RenderPaddle(_leftPaddlePosition, _leftPaddleVertexArrayObject);
+            RenderPaddle(_rightPaddlePosition, _rightPaddleVertexArrayObject);
+            RenderGameBoard();
+        }
 
-            // Render the ball
+        private void RenderBall()
+        {
             var ballModel = Matrix4.CreateTranslation(_ballPosition);
-            GL.UniformMatrix4(GL.GetUniformLocation(_objectShaderProgram, "model"), false, ref ballModel);
-            GL.Uniform3(GL.GetUniformLocation(_objectShaderProgram, "objectColor"), metallicWhite);
-            GL.BindVertexArray(_ballVertexArrayObject);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 16 * 16 * 6); // Adjust according to the sphere's vertex count
+            RenderObject(ballModel, _ballVertexArrayObject, 16 * 16 * 6);
+        }
 
-            // Render the first paddle
-            var leftPaddleModel = Matrix4.CreateTranslation(_leftPaddlePosition);
-            GL.UniformMatrix4(GL.GetUniformLocation(_objectShaderProgram, "model"), false, ref leftPaddleModel);
-            GL.Uniform3(GL.GetUniformLocation(_objectShaderProgram, "objectColor"), metallicWhite);
-            GL.BindVertexArray(_leftPaddleVertexArrayObject);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 36); // Adjust according to the paddle's vertex count
+        private void RenderPaddle(Vector3 position, int vao)
+        {
+            var paddleModel = Matrix4.CreateTranslation(position);
+            RenderObject(paddleModel, vao, 36);
+        }
 
-            // Render the second paddle
-            var rightPaddleModel = Matrix4.CreateTranslation(_rightPaddlePosition);
-            GL.UniformMatrix4(GL.GetUniformLocation(_objectShaderProgram, "model"), false, ref rightPaddleModel);
-            GL.Uniform3(GL.GetUniformLocation(_objectShaderProgram, "objectColor"), metallicWhite);
-            GL.BindVertexArray(_rightPaddleVertexArrayObject);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 36); // Adjust according to the paddle's vertex count
-
-            // Render the game board
-            var gameBoardModel = Matrix4.Identity; // Keep the game board static
+        private void RenderGameBoard()
+        {
+            var gameBoardModel = Matrix4.Identity;
             GL.UniformMatrix4(GL.GetUniformLocation(_objectShaderProgram, "model"), false, ref gameBoardModel);
-            GL.Uniform3(GL.GetUniformLocation(_objectShaderProgram, "objectColor"), new Vector3(1.0f, 1.0f, 1.0f)); // Set line color to white
+            GL.Uniform3(GL.GetUniformLocation(_objectShaderProgram, "objectColor"), Vector3.One);
             GL.BindVertexArray(_gameBoardVertexArrayObject);
             GL.DrawArrays(PrimitiveType.Lines, 0, 24);
+        }
 
-            // Render the left score
+        private void RenderObject(Matrix4 model, int vao, int vertexCount)
+        {
+            GL.UniformMatrix4(GL.GetUniformLocation(_objectShaderProgram, "model"), false, ref model);
+            GL.Uniform3(GL.GetUniformLocation(_objectShaderProgram, "objectColor"), new Vector3(0.9f, 0.9f, 0.9f));
+            GL.BindVertexArray(vao);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, vertexCount);
+        }
+
+        private void RenderScores()
+        {
+            SetupScoreShader();
+            RenderScore(GameBoard.Score.LeftScore, _leftScorePosition);
+            RenderScore(GameBoard.Score.RightScore, _rightScorePosition);
+        }
+
+        private void SetupScoreShader()
+        {
             GL.UseProgram(_scoreShaderProgram);
             GL.UniformMatrix4(GL.GetUniformLocation(_scoreShaderProgram, "view"), false, ref _view);
             GL.UniformMatrix4(GL.GetUniformLocation(_scoreShaderProgram, "projection"), false, ref _projection);
             GL.BindTexture(TextureTarget.Texture2D, _scoreTexture);
             GL.BindVertexArray(_scoreVertexArrayObject);
+        }
 
-            var scoreModel = Matrix4.CreateTranslation(_leftScorePosition) * _view.ClearTranslation().Inverted();
+        private void RenderScore(int score, Vector3 position)
+        {
+            var scoreModel = Matrix4.CreateTranslation(position) * _view.ClearTranslation().Inverted();
             GL.UniformMatrix4(GL.GetUniformLocation(_scoreShaderProgram, "model"), false, ref scoreModel);
 
             float[] vertices;
-            UpdateScoreTextureCoordinates(GameBoard.Score.LeftScore, out vertices);
+            UpdateScoreTextureCoordinates(score, out vertices);
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.DynamicDraw);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 6); // Draw the left score
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
+        }
 
-            // Render the right score
-            var rightScoreModel = Matrix4.CreateTranslation(_rightScorePosition) * _view.ClearTranslation().Inverted();
-            GL.UniformMatrix4(GL.GetUniformLocation(_scoreShaderProgram, "model"), false, ref rightScoreModel);
-
-            UpdateScoreTextureCoordinates(GameBoard.Score.RightScore, out vertices);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.DynamicDraw);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 6); // Draw the right score
-
+        private void SwapBuffersAndLimitFrameRate()
+        {
             SwapBuffers();
 
-            // Frame limiting
             double elapsedTime = _stopwatch.Elapsed.TotalSeconds;
             if (elapsedTime < TargetFrameTime)
             {
@@ -168,7 +203,6 @@ namespace Pong3DOpenTK
             }
             _stopwatch.Restart();
         }
-
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);

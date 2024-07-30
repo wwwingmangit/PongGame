@@ -137,12 +137,10 @@ namespace Pong
 
             NeedToResetGame = true;
         }
-
         protected virtual void ResetParty()
         {
             PaddleFatigue = 1M;
         }
-
         public void Update()
         {
             // reset game if needed
