@@ -48,7 +48,9 @@ namespace Pong3DOpenTK
 
         private int _scoreTexture;
         private int _scoreVertexArrayObject;
-        private Vector3 _scorePosition;
+        private Vector3 _leftScorePosition;
+        private Vector3 _rightScorePosition;
+
         public Pong3DOpenTK(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
         {
@@ -131,19 +133,28 @@ namespace Pong3DOpenTK
             GL.BindVertexArray(_gameBoardVertexArrayObject);
             GL.DrawArrays(PrimitiveType.Lines, 0, 24);
 
-            // Render the score
+            // Render the left score
             GL.UseProgram(_scoreShaderProgram);
             GL.UniformMatrix4(GL.GetUniformLocation(_scoreShaderProgram, "view"), false, ref _view);
             GL.UniformMatrix4(GL.GetUniformLocation(_scoreShaderProgram, "projection"), false, ref _projection);
             GL.BindTexture(TextureTarget.Texture2D, _scoreTexture);
             GL.BindVertexArray(_scoreVertexArrayObject);
-            var scoreModel = Matrix4.CreateTranslation(_scorePosition) * _view.ClearTranslation().Inverted();
+
+            var scoreModel = Matrix4.CreateTranslation(_leftScorePosition) * _view.ClearTranslation().Inverted();
             GL.UniformMatrix4(GL.GetUniformLocation(_scoreShaderProgram, "model"), false, ref scoreModel);
 
             float[] vertices;
             UpdateScoreTextureCoordinates(GameBoard.Score.LeftScore, out vertices);
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.DynamicDraw);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 6); // Draw the score
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 6); // Draw the left score
+
+            // Render the right score
+            var rightScoreModel = Matrix4.CreateTranslation(_rightScorePosition) * _view.ClearTranslation().Inverted();
+            GL.UniformMatrix4(GL.GetUniformLocation(_scoreShaderProgram, "model"), false, ref rightScoreModel);
+
+            UpdateScoreTextureCoordinates(GameBoard.Score.RightScore, out vertices);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.DynamicDraw);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 6); // Draw the right score
 
             SwapBuffers();
 
@@ -180,7 +191,8 @@ namespace Pong3DOpenTK
             _rightPaddlePosition.Z = (float)(GameBoard.RightPaddle.Position.Z);
 
             // Update score position to be in the middle of the box and facing the camera
-            _scorePosition = new Vector3(0.0f, (float)GAMEBOARD_DEFAULT_DEPTH / 2, 0.0f);
+            _leftScorePosition = new Vector3((float)-GAMEBOARD_DEFAULT_WIDTH / 2, (float)GAMEBOARD_DEFAULT_DEPTH / 2, 0.0f);
+            _rightScorePosition = new Vector3((float)+GAMEBOARD_DEFAULT_WIDTH / 2, (float)GAMEBOARD_DEFAULT_DEPTH / 2, 0.0f);
         }
     }
 }
