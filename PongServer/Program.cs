@@ -16,7 +16,7 @@ namespace PongServer
         const decimal PADDLE_DEFAULT_WIDTH = 0.05M;
         const decimal PADDLE_DEFAULT_HEIGHT = 0.3M;
 
-        const int DELAY_PER_UPDATE_IN_MSEC = (1000 / 60);
+        const int DELAY_PER_UPDATE_IN_MSEC = 0; // (1000 / 10000);
 
         const int WINNING_SCORE = 11;
 

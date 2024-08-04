@@ -111,11 +111,6 @@ namespace Pong
             LeftScore = leftScore;
             RightScore = rightScore;
         }
-        public Score(Score otherScore)
-        {
-            LeftScore = otherScore.LeftScore;
-            RightScore = otherScore.RightScore;
-        }
     }
 
     public abstract class GameBoard<TBall, TPaddle, TPosition, TSpeed, TSize>
