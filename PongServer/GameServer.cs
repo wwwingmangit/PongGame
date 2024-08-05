@@ -68,7 +68,7 @@ namespace PongServer
             {
                 Console.Clear();
 
-                foreach (var game in _games.Values.ToList())
+                foreach (var game in GetGames())
                 {
                     if (game != null)
                     {
@@ -98,12 +98,6 @@ namespace PongServer
         {
             _games.TryGetValue(gameId, out var game);
             return game?.Score;
-        }
-
-        public Dictionary<int, Pong.Score> GetAllGameScores()
-        {
-            return _games.Values.Where(game => game.Status == GameInstance.StatusType.Playing)
-                         .ToDictionary(game => game.GetHashCode(), game => game.Score);
         }
 
         public void AddNewGame(int gameUpdateDelayInMSec, int GameWinningScore)
