@@ -1,6 +1,7 @@
 # Coding with my Daughter - Nurturing the Next Generation of Coders with AI
 
 This project aims to empower the next generation of programmers by combining traditional programming skills with cutting-edge AI technology. We're sharing our journey, lessons learned, and code in an open-source format.
+My initial [post is here, on LinkedIn.](https://www.linkedin.com/posts/emmanuelchriqui_programmingeducation-aiincoding-techmentorship-activity-7225132664876396544-txw8)
 
 ## Project Overview
 
