@@ -3,7 +3,7 @@ using Pong;
 
 namespace PongServer
 {
-    class GameInstance
+    public class GameInstance
     {
         public const decimal BOARD_DEFAULT_WIDTH = 2M;
         public const decimal BOARD_DEFAULT_HEIGHT = 2M;

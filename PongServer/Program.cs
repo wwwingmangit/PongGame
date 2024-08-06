@@ -10,7 +10,7 @@ namespace PongServer
         static void Main()
         {
             ILogger _logger = new LoggerConfiguration()
-                                    .MinimumLevel.Information()
+                                    .MinimumLevel.Debug()
                                     .WriteTo.File("log.txt")
                                     .CreateLogger();
             _logger.Information($"Main>>Start");
@@ -18,18 +18,18 @@ namespace PongServer
             GameServer gameServer = new GameServer(_logger);
 
             gameServer.StartServer();
-            MainServerLoop(gameServer);
+            MainServerKeyInputLoop(gameServer);
             gameServer.StopServer();
 
             _logger.Information($"Main<<End");
         }
 
-        static void MainServerLoop(GameServer gameServer)
+        static void MainServerKeyInputLoop(GameServer gameServer)
         {
             while (true)
             {
                 int gameUpdateDelayInMSec = 1;
-                int winningScore = 3;
+                int winningScore = 11;
 
                 if (Console.KeyAvailable)
                 {

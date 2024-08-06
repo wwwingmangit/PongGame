@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 
 namespace PongServer
 {
-    class GameServer
+    public class GameServer
     {
         private ConcurrentDictionary<int, GameInstance> _games;
         private ILogger _logger;
@@ -11,7 +11,7 @@ namespace PongServer
         private Thread? _serverThread;
         private readonly object _serverIsRunningLock = new object();
         private bool _serverIsRunning;
-        private bool ServerIsRunning
+        public bool ServerIsRunning
         {
             get
             {
@@ -21,7 +21,7 @@ namespace PongServer
                 }
             }
 
-            set
+            protected set
             {
                 lock (_serverIsRunningLock)
                 {
@@ -29,12 +29,16 @@ namespace PongServer
                 }
             }
         }
-        public GameServer(ILogger logger)
+        private bool _writeToConsole;
+        public GameServer(ILogger logger, bool writeToConsole = true)
         {
             _logger = logger;
-            _games = new ConcurrentDictionary<int, GameInstance>();
-            _logger.Debug($"GameServer>>Created");
 
+            _games = new ConcurrentDictionary<int, GameInstance>();
+
+            _writeToConsole = writeToConsole;
+
+            _logger.Debug($"GameServer>>Created");
         }
 
         public void StartServer()
@@ -43,6 +47,7 @@ namespace PongServer
 
             _serverThread = new Thread(Update);
             _serverThread.Start();
+
             _logger.Information($"GameServer>>Start");
         }
 
@@ -66,14 +71,17 @@ namespace PongServer
         {
             while (ServerIsRunning)
             {
-                Console.Clear();
+                if (_writeToConsole)
+                    Console.Clear();
 
                 foreach (var game in GetGames())
                 {
                     if (game != null)
                     {
                         (int leftScore, int rightScore) = (game.Score.LeftScore, game.Score.RightScore);
-                        Console.WriteLine($"Game {game.GetHashCode()} has a score of {leftScore} / {rightScore}");
+
+                        if (_writeToConsole)
+                            Console.WriteLine($"Game {game.GetHashCode()} has a score of {leftScore} / {rightScore}");
 
                         if (game.Status == GameInstance.StatusType.Stopped)
                         {
