@@ -1,15 +1,16 @@
 using Pong;
-using PongServer;
+using PongGameServer;
 using Serilog;
 using System.Threading;
 
-namespace PongServerTest
+namespace PongGameServerTest
 {
     [TestClass]
     public class GameServerTests
     {
-        private PongServer.GameServer? _gameServer;
-        ILogger _logger = new LoggerConfiguration()
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        private PongGameServer.GameServer? _gameServer;
+        readonly ILogger _logger = new LoggerConfiguration()
                                     .MinimumLevel.Debug()
                                     .WriteTo.File("testlog.txt")
                                     .CreateLogger();
@@ -120,5 +121,6 @@ namespace PongServerTest
             Assert.AreEqual(0, score.LeftScore);
             Assert.AreEqual(0, score.RightScore);
         }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
     }
 }

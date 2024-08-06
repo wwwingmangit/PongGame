@@ -1,7 +1,8 @@
 ﻿using Serilog;
 using Pong;
+using System.Net.NetworkInformation;
 
-namespace PongServer
+namespace PongGameServer
 {
     public class GameInstance
     {
@@ -63,7 +64,7 @@ namespace PongServer
         private int _updateDelayInMSec;
         private int _winningScore;
 
-        public GameInstance(ILogger logger, 
+        public GameInstance(ILogger logger,
             int updateDelayInMSec = UPDATE_DEFAULT_DELAY_IN_MSEC,
             int winningScore = DEFAULT_WINNING_SCORE)
         {

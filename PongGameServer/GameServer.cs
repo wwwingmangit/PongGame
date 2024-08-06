@@ -1,7 +1,8 @@
 ﻿using Serilog;
 using System.Collections.Concurrent;
+using System.Net.NetworkInformation;
 
-namespace PongServer
+namespace PongGameServer
 {
     public class GameServer
     {
@@ -15,7 +16,7 @@ namespace PongServer
         {
             get
             {
-                lock(_serverIsRunningLock)
+                lock (_serverIsRunningLock)
                 {
                     return _serverIsRunning;
                 }
@@ -133,4 +134,3 @@ namespace PongServer
     }
 }
 
- 

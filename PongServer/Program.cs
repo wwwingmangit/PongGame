@@ -2,8 +2,10 @@
 using Serilog;
 using Serilog.Core;
 using System;
+using PongGameServer;
 
-namespace PongServer
+
+namespace PongConsoleServer
 {
     class Program
     {
