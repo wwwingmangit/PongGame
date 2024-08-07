@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using System.Collections.Concurrent;
 using System.Net.NetworkInformation;
+using System.Threading;
 
 namespace PongGameServer
 {
@@ -39,7 +40,7 @@ namespace PongGameServer
 
             _writeToConsole = writeToConsole;
 
-            _logger.Debug($"GameServer>>Created");
+            _logger.Information($"GameServer>>Created");
         }
 
         public void StartServer()
@@ -111,16 +112,23 @@ namespace PongGameServer
 
         public void AddNewGame(int gameUpdateDelayInMSec, int GameWinningScore)
         {
-            // creat a new game
-            var game = new GameInstance(_logger, gameUpdateDelayInMSec, GameWinningScore);
-            _games.TryAdd(game.GetHashCode(), game);
+            if (ServerIsRunning)
+            {
+                // creat a new game
+                var game = new GameInstance(_logger, gameUpdateDelayInMSec, GameWinningScore);
+                _games.TryAdd(game.GetHashCode(), game);
 
-            // creat a thread for running the new game
-            var thread = new Thread(() => { game.Run(); });
+                // creat a thread for running the new game
+                var thread = new Thread(() => { game.Run(); });
 
-            // start (run) the game            
-            _logger.Information($"GameServer>>Created new GameInstance. Thread {thread.ManagedThreadId}");
-            thread.Start();
+                // start (run) the game            
+                _logger.Information($"GameServer>>Created new GameInstance. Thread {thread.ManagedThreadId}");
+                thread.Start();
+            }
+            else
+            {
+                _logger.Information("Cannot add game when server is not running");
+            }
         }
 
         public void StopGame(int gameId)

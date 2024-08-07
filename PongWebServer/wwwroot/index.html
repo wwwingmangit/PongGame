@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Server Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Pong Server Dashboard</h1>
+    <button onclick="startServer()">Start Server</button>
+    <button onclick="stopServer()">Stop Server</button>
+    <button onclick="addGame()">Add Game</button>
+    <button onclick="stopAllGames()">Stop All Games</button>
+    <div id="gamesList"></div>
+
+    <script>
+        function updateGamesList() {
+            axios.get('/pong/games')
+                .then(response => {
+                    const gamesList = document.getElementById('gamesList');
+                    gamesList.innerHTML = '';
+                    response.data.forEach(game => {
+                        const gameElement = document.createElement('div');
+                        gameElement.innerHTML = `Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore}
+                                            <button onclick="removeGame(${game.id})">Remove</button>`;
+                        gamesList.appendChild(gameElement);
+                    });
+                })
+                .catch(error => console.error('Error fetching games:', error));
+        }
+
+        function startServer() {
+            axios.post('/pong/start')
+                .then(() => updateGamesList())
+                .catch(error => console.error('Error starting server:', error));
+        }
+        function stopServer() {
+            axios.post('/pong/stop')
+                .then(() => updateGamesList())
+                .catch(error => console.error('Error stopping server:', error));
+        }
+        function addGame() {
+            axios.post('/pong/addgame')
+                .then(() => updateGamesList())
+                .catch(error => console.error('Error adding game:', error));
+        }
+
+        function removeGame(id) {
+            axios.delete(`/pong/games/${id}`)
+                .then(() => updateGamesList())
+                .catch(error => console.error('Error removing game:', error));
+        }
+
+        function stopAllGames() {
+            axios.post('/pong/stopall')
+                .then(() => updateGamesList())
+                .catch(error => console.error('Error stopping all games:', error));
+        }
+
+        // Update the games list every second
+        setInterval(updateGamesList, 1000);
+    </script>
+</body>
+</html>
