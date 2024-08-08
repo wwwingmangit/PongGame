@@ -8,10 +8,9 @@
 </head>
 <body>
     <h1>Pong Server Dashboard</h1>
-    <button onclick="startServer()">Start Server</button>
-    <button onclick="stopServer()">Stop Server</button>
     <button onclick="addGame()">Add Game</button>
     <button onclick="stopAllGames()">Stop All Games</button>
+    <button onclick="stopServer()">Stop Server</button>
     <div id="gamesList"></div>
 
     <script>
@@ -23,23 +22,13 @@
                     response.data.forEach(game => {
                         const gameElement = document.createElement('div');
                         gameElement.innerHTML = `Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore}
-                                            <button onclick="removeGame(${game.id})">Remove</button>`;
+                                                    <button onclick="removeGame(${game.id})">Remove</button>`;
                         gamesList.appendChild(gameElement);
                     });
                 })
                 .catch(error => console.error('Error fetching games:', error));
         }
 
-        function startServer() {
-            axios.post('/pong/start')
-                .then(() => updateGamesList())
-                .catch(error => console.error('Error starting server:', error));
-        }
-        function stopServer() {
-            axios.post('/pong/stop')
-                .then(() => updateGamesList())
-                .catch(error => console.error('Error stopping server:', error));
-        }
         function addGame() {
             axios.post('/pong/addgame')
                 .then(() => updateGamesList())
@@ -56,6 +45,11 @@
             axios.post('/pong/stopall')
                 .then(() => updateGamesList())
                 .catch(error => console.error('Error stopping all games:', error));
+        }
+        function stopServer() {
+            axios.post('/pong/stop')
+                .then(() => updateGamesList())
+                .catch(error => console.error('Error stopping server:', error));
         }
 
         // Update the games list every second

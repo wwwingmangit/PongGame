@@ -48,11 +48,4 @@ public class PongController : ControllerBase
         _gameServer.StopServer();
         return Ok("Server stopped");
     }
-
-    [HttpPost("start")]
-    public IActionResult StartServer()
-    {
-        _gameServer.StartServer();
-        return Ok("Server started");
-    }
 }
