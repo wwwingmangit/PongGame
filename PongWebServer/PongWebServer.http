@@ -1,0 +1,14 @@
+@PongWebServer_HostAddress = http://localhost:5123
+
+GET {{PongWebServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+GET {{PongWebServer_HostAddress}}/pong/games/
+Accept: application/json
+
+###
+
+POST {{PongWebServer_HostAddress}}/pong/addgame/
+Accept: application/json

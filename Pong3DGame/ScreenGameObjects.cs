@@ -96,7 +96,6 @@ namespace Pong3DOpenTK
             {
                 FragColor = texture(texture1, TexCoord);
             }";
-
         private int CreateObject(float[] vertices, int vertexSize, int normalOffset)
         {
             int vertexBufferObject = GL.GenBuffer();
@@ -117,19 +116,16 @@ namespace Pong3DOpenTK
 
             return vertexArrayObject;
         }
-
         private int CreateBall(Size3D size)
         {
             float[] ballVertices = GenerateSphereVertices((float)size.Width / 2, 16, 16);
             return CreateObject(ballVertices, 6, 3);
         }
-
         private int CreatePaddle(Size3D size)
         {
             float[] paddleVertices = GenerateBoxVertices((float)size.Width, (float)size.Height, (float)size.Depth);
             return CreateObject(paddleVertices, 6, 3);
         }
-
         private int CreateScreenGameBoard(Size3D size)
         {
             float halfWidth = (float)size.Width / 2.0f;
@@ -153,13 +149,11 @@ namespace Pong3DOpenTK
 
             return CreateObject(gameBoardVertices, 3, -1);
         }
-
         private int CreateBorder(float width, float height, float depth)
         {
             float[] borderVertices = GenerateBoxVertices(width, height, depth);
             return CreateObject(borderVertices, 6, 3);
         }
-
         private float[] GenerateSphereVertices(float radius, int sectorCount, int stackCount)
         {
             float x, y, z, xy;                              // vertex position
@@ -203,7 +197,6 @@ namespace Pong3DOpenTK
 
             return vertices;
         }
-
         private float[] GenerateBoxVertices(float width, float height, float depth)
         {
             float halfWidth = width / 2.0f;
@@ -262,7 +255,6 @@ namespace Pong3DOpenTK
 
             return vertices;
         }
-
         private int LoadTexture(string path)
         {
             int textureId = GL.GenTexture();
@@ -289,7 +281,6 @@ namespace Pong3DOpenTK
 
             return textureId;
         }
-
         private int CreateScoreSurface()
         {
             float[] vertices = {
@@ -317,7 +308,6 @@ namespace Pong3DOpenTK
 
             return vertexArrayObject;
         }
-
         private void UpdateScoreTextureCoordinates(int score, out float[] vertices)
         {
             // Assuming the texture is a single row of digits from 0 to 9
@@ -361,7 +351,6 @@ namespace Pong3DOpenTK
 
             return shaderProgram;
         }
-
         private void CheckShaderCompileErrors(int shader, string type)
         {
             int success;
@@ -372,7 +361,6 @@ namespace Pong3DOpenTK
                 Console.WriteLine($"ERROR::SHADER_COMPILATION_ERROR of type: {type}\n{infoLog}");
             }
         }
-
         private void CheckProgramLinkErrors(int program)
         {
             int success;
@@ -383,6 +371,5 @@ namespace Pong3DOpenTK
                 Console.WriteLine($"ERROR::PROGRAM_LINKING_ERROR\n{infoLog}");
             }
         }
-
     }
 }

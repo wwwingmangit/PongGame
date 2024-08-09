@@ -2,8 +2,10 @@
 using Serilog;
 using Serilog.Core;
 using System;
+using PongGameServer;
 
-namespace PongServer
+
+namespace PongConsoleServer
 {
     class Program
     {
@@ -18,13 +20,13 @@ namespace PongServer
             GameServer gameServer = new GameServer(_logger);
 
             gameServer.StartServer();
-            MainServerKeyInputLoop(gameServer);
+            MainServerKeyInputLoop(gameServer, _logger);
             gameServer.StopServer();
 
             _logger.Information($"Main<<End");
         }
 
-        static void MainServerKeyInputLoop(GameServer gameServer)
+        static void MainServerKeyInputLoop(GameServer gameServer, ILogger _logger)
         {
             while (true)
             {
@@ -39,11 +41,13 @@ namespace PongServer
                     {
                         case ConsoleKey.A:
                             // add a new game
+                            _logger.Information($"Main>>User Requests a new game");
                             gameServer.AddNewGame(gameUpdateDelayInMSec, winningScore);
                             break;
 
                         case ConsoleKey.R:
                             // remove first game
+                            _logger.Information($"Main>>User Requests to remove first game");
                             var games = gameServer.GetGames();
                             if (games.Count > 0)
                             {
@@ -53,11 +57,13 @@ namespace PongServer
 
                         case ConsoleKey.S:
                             // stop all games, server continues to run
+                            _logger.Information($"Main>>User Requests to stop all games");
                             gameServer.StopGames();
                             break;
 
                         case ConsoleKey.Q:
-                            // stop loop
+                            // get out
+                            _logger.Information($"Main>>User Requests to stop server");
                             return;
 
                         default:
