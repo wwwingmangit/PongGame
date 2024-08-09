@@ -4,6 +4,7 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
 using System.Diagnostics;
 using Pong;
+using Serilog;
 
 namespace Pong3DOpenTK
 {
@@ -22,10 +23,8 @@ namespace Pong3DOpenTK
         const decimal GAMEPADDLE_DEFAULT_HEIGHT = 0.3M;
         const decimal GAMEPADDLE_DEFAULT_DEPTH = 0.3M;
 
-        private Pong.GameBoard3D GameBoard = new Pong.GameBoard3D(new Size3D(GAMEBOARD_DEFAULT_WIDTH, GAMEBOARD_DEFAULT_HEIGHT, GAMEBOARD_DEFAULT_DEPTH),
-                                             new Ball3D(new Position3D(), new Speed3D(), new Size3D(GAMEBALL_DEFAULT_WIDTH, GAMEBALL_DEFAULT_HEIGHT, GAMEBALL_DEFAULT_DEPTH)),
-                                             new Paddle3D(new Position3D(), new Speed3D(), new Size3D(GAMEPADDLE_DEFAULT_WIDTH, GAMEPADDLE_DEFAULT_HEIGHT, GAMEPADDLE_DEFAULT_DEPTH)),
-                                             new Paddle3D(new Position3D(), new Speed3D(), new Size3D(GAMEPADDLE_DEFAULT_WIDTH, GAMEPADDLE_DEFAULT_HEIGHT, GAMEPADDLE_DEFAULT_DEPTH)));
+        private Pong.GameBoard3D _gameBoard;
+        private Pong.GameBoard3D GameBoard { get { return _gameBoard; } }
 
         private int _ballVertexArrayObject;
         private int _objectShaderProgram;
@@ -53,9 +52,19 @@ namespace Pong3DOpenTK
 
         private Vector3 _cameraPosition;
 
-        public Pong3DOpenTK(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
+        private readonly ILogger _logger;
+
+        public Pong3DOpenTK(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings, Serilog.ILogger logger)
             : base(gameWindowSettings, nativeWindowSettings)
         {
+            _logger = logger;
+
+            _gameBoard = new Pong.GameBoard3D(new Size3D(GAMEBOARD_DEFAULT_WIDTH, GAMEBOARD_DEFAULT_HEIGHT, GAMEBOARD_DEFAULT_DEPTH),
+                                                         new Ball3D(new Position3D(), new Speed3D(), new Size3D(GAMEBALL_DEFAULT_WIDTH, GAMEBALL_DEFAULT_HEIGHT, GAMEBALL_DEFAULT_DEPTH)),
+                                                         new Paddle3D(new Position3D(), new Speed3D(), new Size3D(GAMEPADDLE_DEFAULT_WIDTH, GAMEPADDLE_DEFAULT_HEIGHT, GAMEPADDLE_DEFAULT_DEPTH)),
+                                                         new Paddle3D(new Position3D(), new Speed3D(), new Size3D(GAMEPADDLE_DEFAULT_WIDTH, GAMEPADDLE_DEFAULT_HEIGHT, GAMEPADDLE_DEFAULT_DEPTH)),
+                                                         _logger);
+
             _stopwatch = new Stopwatch();
         }
         protected override void OnLoad()

@@ -1,5 +1,6 @@
 ﻿using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
+using Serilog;
 
 namespace Pong3DOpenTK
 {
@@ -13,7 +14,12 @@ namespace Pong3DOpenTK
                 Title = "Pong 3D"
             };
 
-            using (var game = new Pong3DOpenTK(GameWindowSettings.Default, nativeWindowSettings))
+            ILogger logger = new LoggerConfiguration()
+                                                .MinimumLevel.Debug()
+                                                .WriteTo.File("log.txt")
+                                                .CreateLogger();
+
+            using (var game = new Pong3DOpenTK(GameWindowSettings.Default, nativeWindowSettings, logger))
             {
                 game.Run();
             }

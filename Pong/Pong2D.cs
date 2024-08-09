@@ -86,8 +86,8 @@ namespace Pong
         public decimal MinY { get; protected set; }
         public decimal MaxY { get; protected set; }
         public Size2D Size { get; protected set; }
-        public GameBoard2D(Size2D size, Ball2D ball, Paddle2D leftPaddle, Paddle2D rightPaddle)
-            : base(ball, leftPaddle, rightPaddle)
+        public GameBoard2D(Size2D size, Ball2D ball, Paddle2D leftPaddle, Paddle2D rightPaddle, Serilog.ILogger logger)
+            : base(ball, leftPaddle, rightPaddle, logger)
         {
             Size = size;
 

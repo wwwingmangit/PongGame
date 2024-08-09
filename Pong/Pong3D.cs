@@ -102,8 +102,8 @@ namespace Pong
         public decimal MinZ { get; protected set; }
         public decimal MaxZ { get; protected set; }
         public Size3D Size { get; protected set; }
-        public GameBoard3D(Size3D size, Ball3D ball, Paddle3D leftPaddle, Paddle3D rightPaddle)
-            : base(ball, leftPaddle, rightPaddle)
+        public GameBoard3D(Size3D size, Ball3D ball, Paddle3D leftPaddle, Paddle3D rightPaddle, Serilog.ILogger logger)
+            : base(ball, leftPaddle, rightPaddle, logger)
         {
             Size = size;
 

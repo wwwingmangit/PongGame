@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reflection.Metadata;
+﻿using Serilog;
 
 namespace Pong
 {
@@ -121,14 +120,17 @@ namespace Pong
         where TSize : Size
     {
         public static Random RandomGenerator = new Random(DateTime.Now.Millisecond);
+        private readonly ILogger _logger;
         public TBall Ball { get; protected set; }
         public TPaddle LeftPaddle { get; protected set; }
         public TPaddle RightPaddle { get; protected set; }
         public Score Score { get; protected set; }
         public bool NeedToResetGame { get; protected set; }
         public decimal PaddleFatigue { get; protected set; }
-        protected GameBoard(TBall ball, TPaddle leftPaddle, TPaddle rightPaddle)
+        protected GameBoard(TBall ball, TPaddle leftPaddle, TPaddle rightPaddle, ILogger logger)
         {
+            _logger = logger;
+
             Ball = ball;
             LeftPaddle = leftPaddle;
             RightPaddle = rightPaddle;
