@@ -119,6 +119,10 @@ namespace Pong
         where TSpeed : Speed
         where TSize : Size
     {
+        private const decimal PADDLE_FATIGUE_DECAY = 0.999M;
+        private const decimal INITIAL_PADDLE_FATIGUE_DECAY = 1M;
+
+
         public static Random RandomGenerator = new Random(DateTime.Now.Millisecond);
         private readonly ILogger _logger;
         public TBall Ball { get; protected set; }
@@ -141,7 +145,7 @@ namespace Pong
         }
         protected virtual void ResetGame()
         {
-            PaddleFatigue = 1M;
+            PaddleFatigue = INITIAL_PADDLE_FATIGUE_DECAY;
         }
         public void Update()
         {
@@ -173,7 +177,7 @@ namespace Pong
         }
         protected virtual void UpdateGame()
         {
-            PaddleFatigue *= 0.999M;
+            PaddleFatigue *= PADDLE_FATIGUE_DECAY;
         }
         protected virtual (bool, bool) CheckGameOver()
         {

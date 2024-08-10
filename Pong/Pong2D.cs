@@ -81,6 +81,9 @@ namespace Pong
     }
     public class GameBoard2D : GameBoard<Ball2D, Paddle2D, Position2D, Speed2D, Size2D>
     {
+        private const decimal PADDLE_OFFSET_FACTOR = 0.7M;
+        private const decimal INITIAL_BALL_SPEED_X = 0.1M;
+        private const decimal INITIAL_BALL_SPEED_Y_FACTOR = 0.1M;
         public decimal MinX { get; protected set; }
         public decimal MaxX { get; protected set; }
         public decimal MinY { get; protected set; }
@@ -101,14 +104,14 @@ namespace Pong
             base.ResetGame();
 
             Ball.Position.X = Ball.Position.Y = 0;
-            Ball.Speed.X = 0.1M * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
-            Ball.Speed.Y = ((decimal)(RandomGenerator.NextDouble()) * 0.1M) * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.X = INITIAL_BALL_SPEED_X * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.Y = ((decimal)(RandomGenerator.NextDouble()) * INITIAL_BALL_SPEED_Y_FACTOR) * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
 
-            LeftPaddle.Position.X = MinX + LeftPaddle.Size.Width * 0.7M;
+            LeftPaddle.Position.X = MinX + LeftPaddle.Size.Width * PADDLE_OFFSET_FACTOR;
             LeftPaddle.Position.Y = 0;
             LeftPaddle.Speed.Y = 0;
 
-            RightPaddle.Position.X = MaxX - RightPaddle.Size.Width * 0.7M;
+            RightPaddle.Position.X = MaxX - RightPaddle.Size.Width * PADDLE_OFFSET_FACTOR;
             RightPaddle.Position.Y = 0;
             RightPaddle.Speed.Y = 0;
         }

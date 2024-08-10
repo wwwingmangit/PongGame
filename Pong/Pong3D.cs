@@ -95,6 +95,9 @@ namespace Pong
     }
     public class GameBoard3D : GameBoard<Ball3D, Paddle3D, Position3D, Speed3D, Size3D>
     {
+        private const decimal PADDLE_OFFSET_FACTOR = 0.7M;
+        private const decimal INITIAL_BALL_SPEED = 0.05M;
+        private const decimal INITIAL_BALL_SPEED_Y_FACTOR = 0.05M;
         public decimal MinX { get; protected set; }
         public decimal MaxX { get; protected set; }
         public decimal MinY { get; protected set; }
@@ -119,18 +122,18 @@ namespace Pong
             base.ResetGame();
 
             Ball.Position.X = Ball.Position.Y = Ball.Position.Z = 0;
-            Ball.Speed.X = 0.05M * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
-            Ball.Speed.Y = ((decimal)(RandomGenerator.NextDouble()) * 0.05M) * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
-            Ball.Speed.Z = 0.05M * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.X = INITIAL_BALL_SPEED * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.Y = ((decimal)(RandomGenerator.NextDouble()) * INITIAL_BALL_SPEED_Y_FACTOR) * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.Z = INITIAL_BALL_SPEED * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
 
-            LeftPaddle.Position.X = MinX + LeftPaddle.Size.Width * 0.7M;
+            LeftPaddle.Position.X = MinX + LeftPaddle.Size.Width * PADDLE_OFFSET_FACTOR;
             LeftPaddle.Position.Y = 0;
-            LeftPaddle.Position.Z = MinZ + LeftPaddle.Size.Depth * 0.7M;
+            LeftPaddle.Position.Z = MinZ + LeftPaddle.Size.Depth * PADDLE_OFFSET_FACTOR;
             LeftPaddle.Speed.Y = 0;
 
-            RightPaddle.Position.X = MaxX - RightPaddle.Size.Width * 0.7M;
+            RightPaddle.Position.X = MaxX - RightPaddle.Size.Width * PADDLE_OFFSET_FACTOR;
             RightPaddle.Position.Y = 0;
-            RightPaddle.Position.Z = MaxZ + RightPaddle.Size.Width * 0.7M;
+            RightPaddle.Position.Z = MaxZ + RightPaddle.Size.Width * PADDLE_OFFSET_FACTOR;
             RightPaddle.Speed.Y = 0;
         }
         protected override void UpdateGame()
