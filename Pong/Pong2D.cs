@@ -152,28 +152,27 @@ namespace Pong
         }
         private void UpdatePaddles(bool playLeftPaddle)
         {
-            // choose paddle to play and to center
             Paddle2D paddle2Play = playLeftPaddle ? LeftPaddle : RightPaddle;
             Paddle2D paddle2Center = playLeftPaddle ? RightPaddle : LeftPaddle;
 
             var paddleMinY = MinY + paddle2Play.Size.Height / 2;
             var paddleMaxY = MaxY - paddle2Play.Size.Height / 2;
 
-            // Update playing paddle in direction of the ball
-            paddle2Play.Speed.Y = Ball.Position.Y > paddle2Play.Position.Y ? +Math.Abs(Ball.Speed.Y) : -Math.Abs(Ball.Speed.Y);
-            paddle2Play.Speed.Y *= 2 * PaddleFatigue;
+            // Move playing paddle towards the ball
+            MovePaddle(paddle2Play, Ball.Position.Y, paddleMinY, paddleMaxY);
 
-            paddle2Play.Position.Y = Math.Abs(paddle2Play.Position.Y - Ball.Position.Y) > Math.Abs(paddle2Play.Speed.Y)
-                                             ? paddle2Play.Position.Y + paddle2Play.Speed.Y
-                                             : Ball.Position.Y;
-            paddle2Play.Position.Y = Math.Clamp(paddle2Play.Position.Y, paddleMinY, paddleMaxY);
+            // Re-center other paddle
+            MovePaddle(paddle2Center, 0, paddleMinY, paddleMaxY);
+        }
+        private void MovePaddle(Paddle2D paddle, decimal targetY, decimal minY, decimal maxY)
+        {
+            paddle.Speed.Y = targetY > paddle.Position.Y ? +Math.Abs(Ball.Speed.Y) : -Math.Abs(Ball.Speed.Y);
+            paddle.Speed.Y *= 2 * PaddleFatigue;
 
-            // Re-center paddle 
-            paddle2Center.Speed.Y = paddle2Center.Position.Y > 0 ? -Math.Abs(Ball.Speed.Y) : +Math.Abs(Ball.Speed.Y);
-            paddle2Center.Position.Y = Math.Abs(paddle2Center.Position.Y) > Math.Abs(paddle2Center.Speed.Y)
-                                    ? paddle2Center.Position.Y + paddle2Center.Speed.Y
-                                    : 0;
-            paddle2Center.Position.Y = Math.Clamp(paddle2Center.Position.Y, paddleMinY, paddleMaxY);
+            paddle.Position.Y = Math.Abs(paddle.Position.Y - targetY) > Math.Abs(paddle.Speed.Y)
+                                ? paddle.Position.Y + paddle.Speed.Y
+                                : targetY;
+            paddle.Position.Y = Math.Clamp(paddle.Position.Y, minY, maxY);
         }
         private void UpdateBall()
         {

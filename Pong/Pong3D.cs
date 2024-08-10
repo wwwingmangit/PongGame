@@ -173,7 +173,6 @@ namespace Pong
         }
         private void UpdatePaddles(bool playLeftPaddle)
         {
-            // choose paddle to play and to center
             Paddle3D paddle2Play = playLeftPaddle ? LeftPaddle : RightPaddle;
             Paddle3D paddle2Center = playLeftPaddle ? RightPaddle : LeftPaddle;
 
@@ -182,35 +181,29 @@ namespace Pong
             var paddleMinZ = MinZ + paddle2Play.Size.Depth / 2;
             var paddleMaxZ = MaxZ - paddle2Play.Size.Depth / 2;
 
-            // Update playing paddle in direction of the ball
-            paddle2Play.Speed.Y = Ball.Position.Y > paddle2Play.Position.Y ? +Math.Abs(Ball.Speed.Y) : -Math.Abs(Ball.Speed.Y);
-            paddle2Play.Speed.Y *= 2 * PaddleFatigue;
+            // Move playing paddle towards the ball
+            MovePaddle3D(paddle2Play, Ball.Position.Y, Ball.Position.Z, paddleMinY, paddleMaxY, paddleMinZ, paddleMaxZ);
 
-            paddle2Play.Position.Y = Math.Abs(paddle2Play.Position.Y - Ball.Position.Y) > Math.Abs(paddle2Play.Speed.Y)
-                                             ? paddle2Play.Position.Y + paddle2Play.Speed.Y
-                                             : Ball.Position.Y;
-            paddle2Play.Position.Y = Math.Clamp(paddle2Play.Position.Y, paddleMinY, paddleMaxY);
+            // Re-center other paddle
+            MovePaddle3D(paddle2Center, 0, 0, paddleMinY, paddleMaxY, paddleMinZ, paddleMaxZ);
+        }
+        private void MovePaddle3D(Paddle3D paddle, decimal targetY, decimal targetZ, decimal minY, decimal maxY, decimal minZ, decimal maxZ)
+        {
+            // Y-axis movement
+            paddle.Speed.Y = targetY > paddle.Position.Y ? +Math.Abs(Ball.Speed.Y) : -Math.Abs(Ball.Speed.Y);
+            paddle.Speed.Y *= 2 * PaddleFatigue;
+            paddle.Position.Y = Math.Abs(paddle.Position.Y - targetY) > Math.Abs(paddle.Speed.Y)
+                                ? paddle.Position.Y + paddle.Speed.Y
+                                : targetY;
+            paddle.Position.Y = Math.Clamp(paddle.Position.Y, minY, maxY);
 
-            paddle2Play.Speed.Z = Ball.Position.Z > paddle2Play.Position.Z ? +Math.Abs(Ball.Speed.Z) : -Math.Abs(Ball.Speed.Z);
-            paddle2Play.Speed.Z *= 2 * PaddleFatigue;
-
-            paddle2Play.Position.Z = Math.Abs(paddle2Play.Position.Z - Ball.Position.Z) > Math.Abs(paddle2Play.Speed.Z)
-                                             ? paddle2Play.Position.Z + paddle2Play.Speed.Z
-                                             : Ball.Position.Z;
-            paddle2Play.Position.Z = Math.Clamp(paddle2Play.Position.Z, paddleMinZ, paddleMaxZ);
-
-            // Re-center paddle 
-            paddle2Center.Speed.Y = paddle2Center.Position.Y > 0 ? -Math.Abs(Ball.Speed.Y) : +Math.Abs(Ball.Speed.Y);
-            paddle2Center.Position.Y = Math.Abs(paddle2Center.Position.Y) > Math.Abs(paddle2Center.Speed.Y)
-                                    ? paddle2Center.Position.Y + paddle2Center.Speed.Y
-                                    : 0;
-            paddle2Center.Position.Y = Math.Clamp(paddle2Center.Position.Y, paddleMinY, paddleMaxY);
-
-            paddle2Center.Speed.Z = paddle2Center.Position.Z > 0 ? -Math.Abs(Ball.Speed.Z) : +Math.Abs(Ball.Speed.Z);
-            paddle2Center.Position.Z = Math.Abs(paddle2Center.Position.Z) > Math.Abs(paddle2Center.Speed.Z)
-                                    ? paddle2Center.Position.Z + paddle2Center.Speed.Z
-                                    : 0;
-            paddle2Center.Position.Z = Math.Clamp(paddle2Center.Position.Z, paddleMinZ, paddleMaxZ);
+            // Z-axis movement
+            paddle.Speed.Z = targetZ > paddle.Position.Z ? +Math.Abs(Ball.Speed.Z) : -Math.Abs(Ball.Speed.Z);
+            paddle.Speed.Z *= 2 * PaddleFatigue;
+            paddle.Position.Z = Math.Abs(paddle.Position.Z - targetZ) > Math.Abs(paddle.Speed.Z)
+                                ? paddle.Position.Z + paddle.Speed.Z
+                                : targetZ;
+            paddle.Position.Z = Math.Clamp(paddle.Position.Z, minZ, maxZ);
         }
         private void UpdateBall()
         {

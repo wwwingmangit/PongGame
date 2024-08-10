@@ -103,12 +103,10 @@ namespace Pong3DOpenTK
             RenderScores();
             SwapBuffersAndLimitFrameRate();
         }
-
         private void ClearBuffers()
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         }
-
         private void UpdateCamera()
         {
             _cameraAngle += 0.01f;
@@ -118,7 +116,6 @@ namespace Pong3DOpenTK
             _cameraPosition = new Vector3(camX, 0.0f, camZ);
             _view = Matrix4.LookAt(_cameraPosition, Vector3.Zero, Vector3.UnitY);
         }
-
         private void SetupShaders()
         {
             GL.UseProgram(_objectShaderProgram);
@@ -127,7 +124,6 @@ namespace Pong3DOpenTK
 
             SetLighting(_cameraPosition);
         }
-
         private void SetLighting(Vector3 cameraPosition)
         {
             Vector3 metallicWhite = new Vector3(0.9f, 0.9f, 0.9f);
@@ -142,19 +138,16 @@ namespace Pong3DOpenTK
             RenderPaddle(_rightPaddlePosition, _rightPaddleVertexArrayObject);
             RenderGameBoard();
         }
-
         private void RenderBall()
         {
             var ballModel = Matrix4.CreateTranslation(_ballPosition);
             RenderObject(ballModel, _ballVertexArrayObject, 16 * 16 * 6);
         }
-
         private void RenderPaddle(Vector3 position, int vao)
         {
             var paddleModel = Matrix4.CreateTranslation(position);
             RenderObject(paddleModel, vao, 36);
         }
-
         private void RenderGameBoard()
         {
             var gameBoardModel = Matrix4.Identity;
@@ -163,7 +156,6 @@ namespace Pong3DOpenTK
             GL.BindVertexArray(_gameBoardVertexArrayObject);
             GL.DrawArrays(PrimitiveType.Lines, 0, 24);
         }
-
         private void RenderObject(Matrix4 model, int vao, int vertexCount)
         {
             GL.UniformMatrix4(GL.GetUniformLocation(_objectShaderProgram, "model"), false, ref model);
@@ -171,14 +163,12 @@ namespace Pong3DOpenTK
             GL.BindVertexArray(vao);
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertexCount);
         }
-
         private void RenderScores()
         {
             SetupScoreShader();
             RenderScore(GameBoard.Score.LeftScore, _leftScorePosition);
             RenderScore(GameBoard.Score.RightScore, _rightScorePosition);
         }
-
         private void SetupScoreShader()
         {
             GL.UseProgram(_scoreShaderProgram);
@@ -187,7 +177,6 @@ namespace Pong3DOpenTK
             GL.BindTexture(TextureTarget.Texture2D, _scoreTexture);
             GL.BindVertexArray(_scoreVertexArrayObject);
         }
-
         private void RenderScore(int score, Vector3 position)
         {
             var scoreModel = Matrix4.CreateTranslation(position) * _view.ClearTranslation().Inverted();
@@ -198,7 +187,6 @@ namespace Pong3DOpenTK
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.DynamicDraw);
             GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
         }
-
         private void SwapBuffersAndLimitFrameRate()
         {
             SwapBuffers();
