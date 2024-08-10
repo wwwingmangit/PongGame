@@ -96,9 +96,9 @@ namespace Pong
             MinY = -Size.Height / 2;
             MaxY = +Size.Height / 2;
         }
-        protected override void ResetParty()
+        protected override void ResetGame()
         {
-            base.ResetParty();
+            base.ResetGame();
 
             Ball.Position.X = Ball.Position.Y = 0;
             Ball.Speed.X = 0.1M * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
@@ -112,9 +112,9 @@ namespace Pong
             RightPaddle.Position.Y = 0;
             RightPaddle.Speed.Y = 0;
         }
-        protected override void UpdateParty()
+        protected override void UpdateGame()
         {
-            base.UpdateParty();
+            base.UpdateGame();
 
             // Update Paddles positions. 
             if (Ball.Speed.X < 0)
@@ -131,7 +131,7 @@ namespace Pong
             // Update Ball Position. Bounce againt top/bottom
             UpdateBall();
         }
-        protected override (bool, bool) CheckPartyOver()
+        protected override (bool, bool) CheckGameOver()
         {
             bool gameIsOver = false;
             bool winnerIsLeftPaddle = false;

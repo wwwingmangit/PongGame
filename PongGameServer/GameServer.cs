@@ -128,15 +128,24 @@ namespace PongGameServer
             else
             {
                 _logger.Information("Cannot add game when server is not running");
+                // should throw exception when server not running
             }
         }
 
         public void StopGame(int gameId)
         {
-            if (_games.TryRemove(gameId, out var game))
+            if (ServerIsRunning)
             {
-                _logger.Information($"GameServer>>Stopping GameInstance {gameId}");
-                game.Stop();
+                if (_games.TryRemove(gameId, out var game))
+                {
+                    _logger.Information($"GameServer>>Stopping GameInstance {gameId}");
+                    game.Stop();
+                }
+            }
+            else
+            {
+                _logger.Information("Cannot stop game when server is not running");
+                // should throw exception when server not running
             }
         }
     }

@@ -139,7 +139,7 @@ namespace Pong
 
             NeedToResetGame = true;
         }
-        protected virtual void ResetParty()
+        protected virtual void ResetGame()
         {
             PaddleFatigue = 1M;
         }
@@ -148,15 +148,15 @@ namespace Pong
             // reset game if needed
             if (NeedToResetGame)
             {
-                ResetParty();
+                ResetGame();
                 NeedToResetGame = false;
             }
 
             // update game
-            UpdateParty();
+            UpdateGame();
 
             // check if party is over
-            (bool gameIsOver, bool winnerIsLeftPaddle) = CheckPartyOver();
+            (bool gameIsOver, bool winnerIsLeftPaddle) = CheckGameOver();
             if (gameIsOver)
             {
                 if (winnerIsLeftPaddle)
@@ -171,11 +171,11 @@ namespace Pong
                 NeedToResetGame = true;
             }
         }
-        protected virtual void UpdateParty()
+        protected virtual void UpdateGame()
         {
             PaddleFatigue *= 0.999M;
         }
-        protected virtual (bool, bool) CheckPartyOver()
+        protected virtual (bool, bool) CheckGameOver()
         {
             bool gameIsOver = false;
             bool winnerIsLeftPaddle = false;
