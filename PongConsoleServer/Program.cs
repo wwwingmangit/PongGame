@@ -31,7 +31,7 @@ namespace PongConsoleServer
             while (true)
             {
                 int gameUpdateDelayInMSec = 1;
-                int winningScore = 11;
+                int winningScore = 3;
 
                 if (Console.KeyAvailable)
                 {

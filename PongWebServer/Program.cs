@@ -1,6 +1,6 @@
 using PongGameServer;
 using Serilog;
-using YourNamespace.Services;
+using PongGameServer.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

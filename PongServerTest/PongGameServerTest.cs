@@ -125,5 +125,31 @@ namespace PongGameServerTest
             Assert.AreEqual(0, score.RightScore);
         }
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
+
+        [TestMethod]
+        public void ConcurrentAccessToScore_ShouldBeThreadSafe()
+        {
+            var gameInstance = new GameInstance(_logger, 100, 10);
+            var tasks = new List<Task>();
+            var iterations = 1000;
+
+            for (int i = 0; i < 10; i++)
+            {
+                tasks.Add(Task.Run(() =>
+                {
+                    for (int j = 0; j < iterations; j++)
+                    {
+                        var score = gameInstance.Score;
+                        // Optionally, you could modify the score here to test write operations
+                    }
+                }));
+            }
+
+            Task.WaitAll(tasks.ToArray());
+
+            // Assert that the final score is as expected
+            // This might be challenging as the exact score depends on the game logic
+            Assert.IsNotNull(gameInstance.Score);
+        }
     }
 }

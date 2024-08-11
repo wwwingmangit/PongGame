@@ -3,7 +3,7 @@ using PongGameServer;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace YourNamespace.Services
+namespace PongGameServer.Services
 {
     public class GameServerHostedService : IHostedService
     {
