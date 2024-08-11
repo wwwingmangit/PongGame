@@ -131,22 +131,24 @@ namespace Pong
     // Score class
     public class Score
     {
-        public int LeftScore { get; protected set; }
-        public int RightScore { get; protected set; }
-        public int IncLeftScore()
-        {
-            return ++LeftScore;
-        }
-        public int IncRightScore()
-        {
-            return ++RightScore;
-        }
+        public int LeftScore { get; private set; }
+        public int RightScore { get; private set; }
+        public int IncLeftScore() => ++LeftScore;
+        public int IncRightScore() => ++RightScore;
         public Score(int leftScore = 0, int rightScore = 0)
         {
+            Update(leftScore, rightScore);
+        }
+        public Score(Score otherScore) : 
+            this(otherScore.LeftScore, otherScore.RightScore) 
+        { }
+        public void Update(Score otherScore) => Update(otherScore.LeftScore, otherScore.RightScore);
+        public void Update(int leftScore, int rightScore)
+        {
             if (leftScore < 0)
-                throw new ArgumentOutOfRangeException($"{nameof(Score)}.ctor: {nameof(leftScore)} cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(leftScore), "Score cannot be negative.");
             if (rightScore < 0)
-                throw new ArgumentOutOfRangeException($"{nameof(Score)}.ctor: {nameof(rightScore)} cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(rightScore), "Score cannot be negative.");
 
             LeftScore = leftScore;
             RightScore = rightScore;
