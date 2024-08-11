@@ -38,12 +38,32 @@ namespace PongTest
         }
 
         [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void Position_ZeroDimensions_ThrowsArgumentException()
+        {
+            _ = new TestPosition(0);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(IndexOutOfRangeException))]
         public void Indexer_OutOfRange_ThrowsException()
         {
             int dimensions = 3;
             var position = new TestPosition(dimensions);
 
-            Assert.ThrowsException<IndexOutOfRangeException>(() => position[3] = 1.1M);
+            position[3] = 1.1M;
+            // Assert.ThrowsException<IndexOutOfRangeException>(() => position[3] = 1.1M);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(IndexOutOfRangeException))]
+        public void Indexer_OutOfRange_ThrowsArgumentOutOfRangeException()
+        {
+            int dimensions = 3;
+            var position = new TestPosition(dimensions);
+
+            position[-1] = 1.1M;
+            //Assert.ThrowsException<IndexOutOfRangeException>(() => position[-1] = 1.1M);
         }
     }
 }
