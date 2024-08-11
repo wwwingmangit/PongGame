@@ -68,7 +68,7 @@ namespace PongGameServer
                             int updateDelayInMSec = UPDATE_DEFAULT_DELAY_IN_MSEC,
                             int winningScore = DEFAULT_WINNING_SCORE)
         {
-            _logger = logger;
+            _logger = logger.ForContext<GameInstance>();
 
             _updateDelayInMSec = updateDelayInMSec;
             _winningScore = winningScore;
@@ -81,12 +81,13 @@ namespace PongGameServer
 
             Status = StatusType.Initiated;
 
-            _logger.Information($"GameInstance>>New GameInstance created {this.GetHashCode()}");
+            _logger.Information("New GameInstance created. ID: {GameId}, UpdateDelay: {UpdateDelay}ms, WinningScore: {WinningScore}",
+                                    this.GetHashCode(), updateDelayInMSec, winningScore);
         }
-
         public void Run()
         {
             Status = StatusType.Playing;
+            _logger.Information("GameInstance {GameId} started", this.GetHashCode());
 
             (int oldLefScore, int oldRightScore) = (_gameBoard.Score.LeftScore, _gameBoard.Score.RightScore);
 
@@ -102,20 +103,23 @@ namespace PongGameServer
                 // check if score evolved
                 if (oldLefScore != Score.LeftScore || oldRightScore != Score.RightScore)
                 {
-                    _logger.Debug($"GameInstace {this.GetHashCode()} score updated to ({Score.LeftScore} / {Score.RightScore})");
+                    _logger.Debug("GameInstance {GameId} score updated to ({LeftScore} / {RightScore})",
+                                  this.GetHashCode(), Score.LeftScore, Score.RightScore);
+                    (oldLefScore, oldRightScore) = (_gameBoard.Score.LeftScore, _gameBoard.Score.RightScore);
                 }
-                (oldLefScore, oldRightScore) = (_gameBoard.Score.LeftScore, _gameBoard.Score.RightScore);
 
                 // delay execution of the thread handling the game
                 Thread.Sleep(_updateDelayInMSec);
             }
 
-            _logger.Information($"GameInstace {this.GetHashCode()} ends at score ({Score.LeftScore} / {Score.RightScore})");
+            _logger.Information("GameInstance {GameId} ended. Final score: ({LeftScore} / {RightScore})",
+                                this.GetHashCode(), Score.LeftScore, Score.RightScore);
             Stop();
         }
         public void Stop()
         {
             Status = StatusType.Stopped;
+            _logger.Information("GameInstance {GameId} stopped", this.GetHashCode());
         }
     }
 }
