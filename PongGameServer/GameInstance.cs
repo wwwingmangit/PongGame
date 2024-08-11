@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using Pong;
 using System.Net.NetworkInformation;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace PongGameServer
 {
@@ -44,9 +45,6 @@ namespace PongGameServer
                 }
             }
         }
-
-        private readonly object _scoreLock = new object();
-        private Score _score = new Score();
         public Score Score
         {
             get
@@ -64,13 +62,38 @@ namespace PongGameServer
                 }
             }
         }
+        public TimeSpan Duration
+        {
+            get
+            {
+                lock (_durationLock)
+                {
+                    return _duration;
+                }
+            }
+            protected set
+            {
+                lock (_durationLock)
+                {
+                    _duration = value;
+                }
+            }
+        }
+
+        private readonly object _scoreLock = new object();
+        private Score _score = new Score();
 
         private readonly object _stateLock = new object();
         private StatusType _status;
 
+        private readonly object _durationLock = new object();
+        private TimeSpan _duration = new TimeSpan();
+
         private ILogger _logger;
         private int _updateDelayInMSec;
         private int _winningScore;
+        private DateTime _startTime;
+
 
         public GameInstance(Serilog.ILogger logger,
                             int updateDelayInMSec = UPDATE_DEFAULT_DELAY_IN_MSEC,
@@ -88,6 +111,8 @@ namespace PongGameServer
                                               _logger);
 
             _score.Update(_gameBoard.Score);
+
+            _startTime = DateTime.Now;
 
             Status = StatusType.Initiated;
 
@@ -107,12 +132,16 @@ namespace PongGameServer
                 // update game engine
                 _gameBoard.Update();
                 Score = _gameBoard.Score; // this is thread safe because the _gameBoard Score changes only during the Update
+                Duration = DateTime.Now - _startTime;
 
                 // check if score evolved
                 if (oldScore.LeftScore != Score.LeftScore || oldScore.RightScore != Score.RightScore)
                 {
-                    _logger.Debug("GameInstance {GameId} score updated to ({LeftScore} / {RightScore})",
-                                  this.GetHashCode(), Score.LeftScore, Score.RightScore);
+                    //_logger.Debug("GameInstance {GameId} score updated to ({LeftScore} / {RightScore})",
+                    //              this.GetHashCode(), Score.LeftScore, Score.RightScore);
+                    _logger.Debug("GameInstance {GameId} score updated to ({LeftScore} / {RightScore}), Duration: {Duration}",
+                                    this.GetHashCode(), Score.LeftScore, Score.RightScore, this.Duration.ToString(@"hh\:mm\:ss"));
+
                     oldScore.Update(Score);
                 }
 
@@ -120,8 +149,8 @@ namespace PongGameServer
                 Thread.Sleep(_updateDelayInMSec);
             }
 
-            _logger.Information("GameInstance {GameId} ended. Final score: ({LeftScore} / {RightScore})",
-                                this.GetHashCode(), Score.LeftScore, Score.RightScore);
+            _logger.Information("GameInstance {GameId} ended. Final score: ({LeftScore} / {RightScore}) , Duration: {Duration}",
+                                this.GetHashCode(), Score.LeftScore, Score.RightScore, this.Duration.ToString(@"hh\:mm\:ss"));
             Stop();
         }
         public void Stop()

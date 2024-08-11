@@ -21,8 +21,9 @@
                     gamesList.innerHTML = '';
                     response.data.forEach(game => {
                         const gameElement = document.createElement('div');
-                        gameElement.innerHTML = `Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore}
-                                                    <button onclick="removeGame(${game.id})">Remove</button>`;
+                        const durationString = game.Duration ? formatDuration(game.Duration) : 'N/A';
+                        gameElement.innerHTML = `Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore} - ${game.duration})
+                                         <button onclick="removeGame(${game.id})">Remove</button>`;
                         gamesList.appendChild(gameElement);
                     });
                 })

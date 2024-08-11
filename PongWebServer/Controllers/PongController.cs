@@ -16,7 +16,7 @@ public class PongController : ControllerBase
     public IActionResult GetGames()
     {
         var games = _gameServer.GetGames();
-        return Ok(games.Select(g => new { Id = g.GetHashCode(), Score = g.Score }));
+        return Ok(games.Select(g => new { Id = g.GetHashCode(), Score = g.Score, Duration = g.Duration.ToString(@"hh\:mm\:ss") }));
     }
 
     [HttpPost("addgame")]
