@@ -46,13 +46,21 @@ namespace PongGameServer
         }
 
         private readonly object _scoreLock = new object();
-        public Pong.Score Score
+        private Score _score = new Score();
+        public Score Score
         {
             get
             {
                 lock (_scoreLock)
                 {
-                    return _gameBoard.Score;
+                    return _score;
+                }
+            }
+            protected set
+            {
+                lock (_scoreLock)
+                {
+                    _score = value;
                 }
             }
         }
@@ -79,6 +87,8 @@ namespace PongGameServer
                                               new Paddle2D(new Position2D(), new Speed2D(), new Size2D(PADDLE_DEFAULT_WIDTH, PADDLE_DEFAULT_HEIGHT)),
                                               _logger);
 
+            _score.Update(_gameBoard.Score);
+
             Status = StatusType.Initiated;
 
             _logger.Information("New GameInstance created. ID: {GameId}, UpdateDelay: {UpdateDelay}ms, WinningScore: {WinningScore}",
@@ -89,23 +99,21 @@ namespace PongGameServer
             Status = StatusType.Playing;
             _logger.Information("GameInstance {GameId} started", this.GetHashCode());
 
-            (int oldLefScore, int oldRightScore) = (_gameBoard.Score.LeftScore, _gameBoard.Score.RightScore);
+            Score oldScore = new Score(this.Score);
 
             while (Score.LeftScore < _winningScore && Score.RightScore < _winningScore
                    && Status != StatusType.Stopped)
             {
                 // update game engine
-                lock (_scoreLock)
-                {
-                    _gameBoard.Update();
-                }
+                _gameBoard.Update();
+                Score = _gameBoard.Score; // this is thread safe because the _gameBoard Score changes only during the Update
 
                 // check if score evolved
-                if (oldLefScore != Score.LeftScore || oldRightScore != Score.RightScore)
+                if (oldScore.LeftScore != Score.LeftScore || oldScore.RightScore != Score.RightScore)
                 {
                     _logger.Debug("GameInstance {GameId} score updated to ({LeftScore} / {RightScore})",
                                   this.GetHashCode(), Score.LeftScore, Score.RightScore);
-                    (oldLefScore, oldRightScore) = (_gameBoard.Score.LeftScore, _gameBoard.Score.RightScore);
+                    oldScore.Update(Score);
                 }
 
                 // delay execution of the thread handling the game
