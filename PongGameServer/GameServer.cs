@@ -34,13 +34,13 @@ namespace PongGameServer
         private bool _writeToConsole;
         public GameServer(ILogger logger, bool writeToConsole = true)
         {
-            _logger = logger;
+            _logger = logger.ForContext<GameServer>();
 
             _games = new ConcurrentDictionary<int, GameInstance>();
 
             _writeToConsole = writeToConsole;
-
-            _logger.Information($"GameServer>>Created");
+            
+            _logger.Information("GameServer created");
         }
 
         public void StartServer()
@@ -50,17 +50,18 @@ namespace PongGameServer
             _serverThread = new Thread(Update);
             _serverThread.Start();
 
-            _logger.Information($"GameServer>>Start");
+            _logger.Information("GameServer started");
         }
 
         public void StopServer()
         {
-            _logger.Information($"GameServer>>Stop games");
+            _logger.Information("Stopping GameServer");
             StopGames();
-            _logger.Information($"GameServer>>Stop");
 
             ServerIsRunning = false;
             _serverThread?.Join();
+
+            _logger.Information("GameServer stopped");
         }
         public void StopGames()
         {
@@ -87,7 +88,7 @@ namespace PongGameServer
 
                         if (game.Status == GameInstance.StatusType.Stopped)
                         {
-                            _logger.Information($"GameServer>>End GameInstance {game.GetHashCode()}");
+                            _logger.Information("GameInstance {GameId} ended", game.GetHashCode());
                             _games.TryRemove(game.GetHashCode(), out _);
                         }
                     }
@@ -114,38 +115,40 @@ namespace PongGameServer
         {
             if (ServerIsRunning)
             {
-                // creat a new game
                 var game = new GameInstance(_logger, gameUpdateDelayInMSec, GameWinningScore);
                 _games.TryAdd(game.GetHashCode(), game);
 
-                // creat a thread for running the new game
                 var thread = new Thread(() => { game.Run(); });
 
-                // start (run) the game            
-                _logger.Information($"GameServer>>Created new GameInstance. Thread {thread.ManagedThreadId}");
+                //_logger.Information($"GameServer>>Created new GameInstance. Thread {thread.ManagedThreadId}");
+                _logger.Information("Created new GameInstance {@GameDetails}",
+                                    new { GameId = game.GetHashCode(), ThreadId = thread.ManagedThreadId });
                 thread.Start();
             }
             else
             {
-                _logger.Information("Cannot add game when server is not running");
+                _logger.Warning("Attempted to add game when server is not running");
                 // should throw exception when server not running
             }
         }
-
         public void StopGame(int gameId)
         {
             if (ServerIsRunning)
             {
                 if (_games.TryRemove(gameId, out var game))
                 {
-                    _logger.Information($"GameServer>>Stopping GameInstance {gameId}");
+                    _logger.Information("Stopping GameInstance {GameId}", gameId);
                     game.Stop();
+                }
+                else
+                {
+                    _logger.Warning("Attempted to stop non-existent game {GameId}", gameId);
                 }
             }
             else
             {
-                _logger.Information("Cannot stop game when server is not running");
-                // should throw exception when server not running
+                _logger.Warning("Attempted to stop game when server is not running");
+                // Throw exception here
             }
         }
     }
