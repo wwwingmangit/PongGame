@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reflection.Metadata;
+﻿using Serilog;
 
 namespace Pong
 {
@@ -10,13 +9,26 @@ namespace Pong
 
         protected Position(int dimensions)
         {
+            if (dimensions <= 0)
+                throw new ArgumentException($"{nameof(Position)}: Dimensions must be a positive integer.", nameof(dimensions));
+
             Coordinates = new decimal[dimensions];
         }
 
         public decimal this[int index]
         {
-            get => Coordinates[index];
-            set => Coordinates[index] = value;
+            get
+            {
+                if (index < 0 || index >= Coordinates.Length)
+                    throw new IndexOutOfRangeException($"{nameof(Position)}[{nameof(index)}]: Index is out of range.");
+                return Coordinates[index];
+            }
+            set
+            {
+                if (index < 0 || index >= Coordinates.Length)
+                    throw new IndexOutOfRangeException($"{nameof(Position)}[{nameof(index)}]: Index is out of range.");
+                Coordinates[index] = value;
+            }
         }
     }
 
@@ -27,13 +39,26 @@ namespace Pong
 
         protected Speed(int dimensions)
         {
+            if (dimensions <= 0)
+                throw new ArgumentException($"{nameof(Speed)}: Dimensions must be a positive integer.", nameof(dimensions));
+
             Components = new decimal[dimensions];
         }
 
         public decimal this[int index]
         {
-            get => Components[index];
-            set => Components[index] = value;
+            get
+            {
+                if (index < 0 || index >= Components.Length)
+                    throw new IndexOutOfRangeException($"{nameof(Speed)}[{nameof(index)}]: Index is out of range.");
+                return Components[index];
+            }
+            set
+            {
+                if (index < 0 || index >= Components.Length)
+                    throw new IndexOutOfRangeException($"{nameof(Speed)}[{nameof(index)}]: Index is out of range.");
+                Components[index] = value;
+            }
         }
     }
 
@@ -44,13 +69,26 @@ namespace Pong
 
         protected Size(int dimensions)
         {
+            if (dimensions <= 0)
+                throw new ArgumentException($"{nameof(Size)}: Dimensions must be a positive integer.", nameof(dimensions));
+
             Components = new decimal[dimensions];
         }
 
         public decimal this[int index]
         {
-            get => Components[index];
-            set => Components[index] = value;
+            get
+            {
+                if (index < 0 || index >= Components.Length)
+                    throw new IndexOutOfRangeException($"{nameof(Size)}[{nameof(index)}]: Index is out of range.");
+                return Components[index];
+            }
+            set
+            {
+                if (index < 0 || index >= Components.Length)
+                    throw new IndexOutOfRangeException($"{nameof(Size)}[{nameof(index)}]: Index is out of range.");
+                Components[index] = value;
+            }
         }
     }
 
@@ -66,9 +104,9 @@ namespace Pong
 
         protected Paddle(TPosition position, TSpeed speed, TSize size)
         {
-            Position = position;
-            Speed = speed;
-            Size = size;
+            Position = position ?? throw new ArgumentNullException($"{nameof(Paddle<TPosition, TSpeed, TSize>)}.ctor: {nameof(position)} cannot be null.");
+            Speed = speed ?? throw new ArgumentNullException($"{nameof(Paddle<TPosition, TSpeed, TSize>)}.ctor: {nameof(speed)} cannot be null.");
+            Size = size ?? throw new ArgumentNullException($"{nameof(Paddle<TPosition, TSpeed, TSize>)}.ctor: {nameof(size)} cannot be null.");
         }
     }
 
@@ -84,9 +122,9 @@ namespace Pong
 
         protected Ball(TPosition position, TSpeed speed, TSize size)
         {
-            Position = position;
-            Speed = speed;
-            Size = size;
+            Position = position ?? throw new ArgumentNullException($"{nameof(Ball<TPosition, TSpeed, TSize>)}.ctor: {nameof(position)} cannot be null.");
+            Speed = speed ?? throw new ArgumentNullException($"{nameof(Ball<TPosition, TSpeed, TSize>)}.ctor: {nameof(speed)} cannot be null.");
+            Size = size ?? throw new ArgumentNullException($"{nameof(Ball<TPosition, TSpeed, TSize>)}.ctor: {nameof(size)} cannot be null.");
         }
     }
 
@@ -95,19 +133,21 @@ namespace Pong
     {
         public int LeftScore { get; protected set; }
         public int RightScore { get; protected set; }
-
         public int IncLeftScore()
         {
             return ++LeftScore;
         }
-
         public int IncRightScore()
         {
             return ++RightScore;
         }
-
         public Score(int leftScore = 0, int rightScore = 0)
         {
+            if (leftScore < 0)
+                throw new ArgumentOutOfRangeException($"{nameof(Score)}.ctor: {nameof(leftScore)} cannot be negative.");
+            if (rightScore < 0)
+                throw new ArgumentOutOfRangeException($"{nameof(Score)}.ctor: {nameof(rightScore)} cannot be negative.");
+
             LeftScore = leftScore;
             RightScore = rightScore;
         }
@@ -120,41 +160,45 @@ namespace Pong
         where TSpeed : Speed
         where TSize : Size
     {
+        private const decimal PADDLE_FATIGUE_DECAY = 0.999M;
+        private const decimal INITIAL_PADDLE_FATIGUE_DECAY = 1M;
+
         public static Random RandomGenerator = new Random(DateTime.Now.Millisecond);
+        private readonly ILogger _logger;
         public TBall Ball { get; protected set; }
         public TPaddle LeftPaddle { get; protected set; }
         public TPaddle RightPaddle { get; protected set; }
         public Score Score { get; protected set; }
         public bool NeedToResetGame { get; protected set; }
         public decimal PaddleFatigue { get; protected set; }
-        protected GameBoard(TBall ball, TPaddle leftPaddle, TPaddle rightPaddle)
+        protected GameBoard(TBall ball, TPaddle leftPaddle, TPaddle rightPaddle, ILogger logger)
         {
-            Ball = ball;
-            LeftPaddle = leftPaddle;
-            RightPaddle = rightPaddle;
+            Ball = ball ?? throw new ArgumentNullException($"{GetType().Name} constructor: {nameof(ball)} cannot be null.");
+            LeftPaddle = leftPaddle ?? throw new ArgumentNullException($"{GetType().Name} constructor: {nameof(leftPaddle)} cannot be null.");
+            RightPaddle = rightPaddle ?? throw new ArgumentNullException($"{GetType().Name} constructor: {nameof(rightPaddle)} cannot be null.");
+            _logger = logger ?? throw new ArgumentNullException($"{GetType().Name} constructor: {nameof(logger)} cannot be null.");
 
             Score = new Score();
-
             NeedToResetGame = true;
         }
-        protected virtual void ResetParty()
+        protected virtual void ResetGame()
         {
-            PaddleFatigue = 1M;
+            PaddleFatigue = INITIAL_PADDLE_FATIGUE_DECAY;
         }
         public void Update()
         {
             // reset game if needed
             if (NeedToResetGame)
             {
-                ResetParty();
+                ResetGame();
                 NeedToResetGame = false;
             }
 
             // update game
-            UpdateParty();
+            UpdateGame();
 
             // check if party is over
-            (bool gameIsOver, bool winnerIsLeftPaddle) = CheckPartyOver();
+            (bool gameIsOver, bool winnerIsLeftPaddle) = CheckGameOver();
             if (gameIsOver)
             {
                 if (winnerIsLeftPaddle)
@@ -169,11 +213,11 @@ namespace Pong
                 NeedToResetGame = true;
             }
         }
-        protected virtual void UpdateParty()
+        protected virtual void UpdateGame()
         {
-            PaddleFatigue *= 0.999M;
+            PaddleFatigue *= PADDLE_FATIGUE_DECAY;
         }
-        protected virtual (bool, bool) CheckPartyOver()
+        protected virtual (bool, bool) CheckGameOver()
         {
             bool gameIsOver = false;
             bool winnerIsLeftPaddle = false;

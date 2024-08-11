@@ -1,4 +1,5 @@
 using Pong;
+using Serilog;
 using System;
 using System.Drawing;
 using System.Numerics;
@@ -18,10 +19,8 @@ namespace PongClient
 
         const int UPDATE_INTERVAL_IN_MSEC = (int)(1M/30M * 1000M);
 
-        private Pong.GameBoard2D GameBoard = new Pong.GameBoard2D(new Size2D(GAMEBOARD_DEFAULT_WIDTH, GAMEBOARD_DEFAULT_HEIGHT),
-                                             new Ball2D(new Position2D(), new Speed2D(), new Size2D(BALL_DEFAULT_WIDTH, BALL_DEFAULT_HEIGHT)),
-                                             new Paddle2D(new Position2D(), new Speed2D(), new Size2D(PADDLE_DEFAULT_WIDTH, PADDLE_DEFAULT_HEIGHT)),
-                                             new Paddle2D(new Position2D(), new Speed2D(), new Size2D(PADDLE_DEFAULT_WIDTH, PADDLE_DEFAULT_HEIGHT)));
+        private Pong.GameBoard2D _gameBoard;
+        private Pong.GameBoard2D GameBoard {  get { return _gameBoard; } }
 
         private Rectangle Paddle1;
         private Rectangle Paddle2;
@@ -34,8 +33,19 @@ namespace PongClient
 
         int ScreenWidth, ScreenHeight;
 
-        public PongGameForm()
+        private readonly ILogger _logger;
+
+        public PongGameForm(Serilog.ILogger logger)
         {
+            _logger = logger;
+
+            _gameBoard = new Pong.GameBoard2D(new Size2D(GAMEBOARD_DEFAULT_WIDTH, GAMEBOARD_DEFAULT_HEIGHT),
+                                             new Ball2D(new Position2D(), new Speed2D(), new Size2D(BALL_DEFAULT_WIDTH, BALL_DEFAULT_HEIGHT)),
+                                             new Paddle2D(new Position2D(), new Speed2D(), new Size2D(PADDLE_DEFAULT_WIDTH, PADDLE_DEFAULT_HEIGHT)),
+                                             new Paddle2D(new Position2D(), new Speed2D(), new Size2D(PADDLE_DEFAULT_WIDTH, PADDLE_DEFAULT_HEIGHT)),
+                                             _logger);
+
+
             InitializeComponent();
             InitializeGame();
             InitializeTimer();

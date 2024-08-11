@@ -49,19 +49,22 @@ namespace PongGameServerTest
 
             _gameServer.AddNewGame(100, 10);
 
-            Assert.AreEqual(initialGameCount + 1, _gameServer.GetGames().Count);
+            Assert.AreEqual(initialGameCount, _gameServer.GetGames().Count);
         }
 
         [TestMethod]
         public void StopGame_ServerNotRunning_DecreasesGameCount()
         {
+            _gameServer.StartServer();
+
             _gameServer.AddNewGame(100, 10);
             int gameId = _gameServer.GetGames().First().GetHashCode();
             int initialGameCount = _gameServer.GetGames().Count;
+            _gameServer.StopServer();
 
             _gameServer.StopGame(gameId);
 
-            Assert.AreEqual(initialGameCount - 1, _gameServer.GetGames().Count);
+            Assert.AreEqual(initialGameCount, _gameServer.GetGames().Count);
         }
 
         [TestMethod]

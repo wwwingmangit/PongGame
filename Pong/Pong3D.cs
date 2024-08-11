@@ -95,6 +95,9 @@ namespace Pong
     }
     public class GameBoard3D : GameBoard<Ball3D, Paddle3D, Position3D, Speed3D, Size3D>
     {
+        private const decimal PADDLE_OFFSET_FACTOR = 0.7M;
+        private const decimal INITIAL_BALL_SPEED = 0.05M;
+        private const decimal INITIAL_BALL_SPEED_Y_FACTOR = 0.05M;
         public decimal MinX { get; protected set; }
         public decimal MaxX { get; protected set; }
         public decimal MinY { get; protected set; }
@@ -102,8 +105,8 @@ namespace Pong
         public decimal MinZ { get; protected set; }
         public decimal MaxZ { get; protected set; }
         public Size3D Size { get; protected set; }
-        public GameBoard3D(Size3D size, Ball3D ball, Paddle3D leftPaddle, Paddle3D rightPaddle)
-            : base(ball, leftPaddle, rightPaddle)
+        public GameBoard3D(Size3D size, Ball3D ball, Paddle3D leftPaddle, Paddle3D rightPaddle, Serilog.ILogger logger)
+            : base(ball, leftPaddle, rightPaddle, logger)
         {
             Size = size;
 
@@ -114,28 +117,28 @@ namespace Pong
             MinZ = -Size.Depth / 2;
             MaxZ = +Size.Depth / 2;
         }
-        protected override void ResetParty()
+        protected override void ResetGame()
         {
-            base.ResetParty();
+            base.ResetGame();
 
             Ball.Position.X = Ball.Position.Y = Ball.Position.Z = 0;
-            Ball.Speed.X = 0.05M * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
-            Ball.Speed.Y = ((decimal)(RandomGenerator.NextDouble()) * 0.05M) * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
-            Ball.Speed.Z = 0.05M * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.X = INITIAL_BALL_SPEED * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.Y = ((decimal)(RandomGenerator.NextDouble()) * INITIAL_BALL_SPEED_Y_FACTOR) * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
+            Ball.Speed.Z = INITIAL_BALL_SPEED * (RandomGenerator.Next(2) == 0 ? 1M : -1M);
 
-            LeftPaddle.Position.X = MinX + LeftPaddle.Size.Width * 0.7M;
+            LeftPaddle.Position.X = MinX + LeftPaddle.Size.Width * PADDLE_OFFSET_FACTOR;
             LeftPaddle.Position.Y = 0;
-            LeftPaddle.Position.Z = MinZ + LeftPaddle.Size.Depth * 0.7M;
+            LeftPaddle.Position.Z = MinZ + LeftPaddle.Size.Depth * PADDLE_OFFSET_FACTOR;
             LeftPaddle.Speed.Y = 0;
 
-            RightPaddle.Position.X = MaxX - RightPaddle.Size.Width * 0.7M;
+            RightPaddle.Position.X = MaxX - RightPaddle.Size.Width * PADDLE_OFFSET_FACTOR;
             RightPaddle.Position.Y = 0;
-            RightPaddle.Position.Z = MaxZ + RightPaddle.Size.Width * 0.7M;
+            RightPaddle.Position.Z = MaxZ + RightPaddle.Size.Width * PADDLE_OFFSET_FACTOR;
             RightPaddle.Speed.Y = 0;
         }
-        protected override void UpdateParty()
+        protected override void UpdateGame()
         {
-            base.UpdateParty();
+            base.UpdateGame();
 
             // Update Paddles positions. 
             if (Ball.Speed.X < 0)
@@ -152,7 +155,7 @@ namespace Pong
             // Update Ball Position. Bounce againt top/bottom
             UpdateBall();
         }
-        protected override (bool, bool) CheckPartyOver()
+        protected override (bool, bool) CheckGameOver()
         {
             bool gameIsOver = false;
             bool winnerIsLeftPaddle = false;
@@ -173,7 +176,6 @@ namespace Pong
         }
         private void UpdatePaddles(bool playLeftPaddle)
         {
-            // choose paddle to play and to center
             Paddle3D paddle2Play = playLeftPaddle ? LeftPaddle : RightPaddle;
             Paddle3D paddle2Center = playLeftPaddle ? RightPaddle : LeftPaddle;
 
@@ -182,35 +184,29 @@ namespace Pong
             var paddleMinZ = MinZ + paddle2Play.Size.Depth / 2;
             var paddleMaxZ = MaxZ - paddle2Play.Size.Depth / 2;
 
-            // Update playing paddle in direction of the ball
-            paddle2Play.Speed.Y = Ball.Position.Y > paddle2Play.Position.Y ? +Math.Abs(Ball.Speed.Y) : -Math.Abs(Ball.Speed.Y);
-            paddle2Play.Speed.Y *= 2 * PaddleFatigue;
+            // Move playing paddle towards the ball
+            MovePaddle3D(paddle2Play, Ball.Position.Y, Ball.Position.Z, paddleMinY, paddleMaxY, paddleMinZ, paddleMaxZ);
 
-            paddle2Play.Position.Y = Math.Abs(paddle2Play.Position.Y - Ball.Position.Y) > Math.Abs(paddle2Play.Speed.Y)
-                                             ? paddle2Play.Position.Y + paddle2Play.Speed.Y
-                                             : Ball.Position.Y;
-            paddle2Play.Position.Y = Math.Clamp(paddle2Play.Position.Y, paddleMinY, paddleMaxY);
+            // Re-center other paddle
+            MovePaddle3D(paddle2Center, 0, 0, paddleMinY, paddleMaxY, paddleMinZ, paddleMaxZ);
+        }
+        private void MovePaddle3D(Paddle3D paddle, decimal targetY, decimal targetZ, decimal minY, decimal maxY, decimal minZ, decimal maxZ)
+        {
+            // Y-axis movement
+            paddle.Speed.Y = targetY > paddle.Position.Y ? +Math.Abs(Ball.Speed.Y) : -Math.Abs(Ball.Speed.Y);
+            paddle.Speed.Y *= 2 * PaddleFatigue;
+            paddle.Position.Y = Math.Abs(paddle.Position.Y - targetY) > Math.Abs(paddle.Speed.Y)
+                                ? paddle.Position.Y + paddle.Speed.Y
+                                : targetY;
+            paddle.Position.Y = Math.Clamp(paddle.Position.Y, minY, maxY);
 
-            paddle2Play.Speed.Z = Ball.Position.Z > paddle2Play.Position.Z ? +Math.Abs(Ball.Speed.Z) : -Math.Abs(Ball.Speed.Z);
-            paddle2Play.Speed.Z *= 2 * PaddleFatigue;
-
-            paddle2Play.Position.Z = Math.Abs(paddle2Play.Position.Z - Ball.Position.Z) > Math.Abs(paddle2Play.Speed.Z)
-                                             ? paddle2Play.Position.Z + paddle2Play.Speed.Z
-                                             : Ball.Position.Z;
-            paddle2Play.Position.Z = Math.Clamp(paddle2Play.Position.Z, paddleMinZ, paddleMaxZ);
-
-            // Re-center paddle 
-            paddle2Center.Speed.Y = paddle2Center.Position.Y > 0 ? -Math.Abs(Ball.Speed.Y) : +Math.Abs(Ball.Speed.Y);
-            paddle2Center.Position.Y = Math.Abs(paddle2Center.Position.Y) > Math.Abs(paddle2Center.Speed.Y)
-                                    ? paddle2Center.Position.Y + paddle2Center.Speed.Y
-                                    : 0;
-            paddle2Center.Position.Y = Math.Clamp(paddle2Center.Position.Y, paddleMinY, paddleMaxY);
-
-            paddle2Center.Speed.Z = paddle2Center.Position.Z > 0 ? -Math.Abs(Ball.Speed.Z) : +Math.Abs(Ball.Speed.Z);
-            paddle2Center.Position.Z = Math.Abs(paddle2Center.Position.Z) > Math.Abs(paddle2Center.Speed.Z)
-                                    ? paddle2Center.Position.Z + paddle2Center.Speed.Z
-                                    : 0;
-            paddle2Center.Position.Z = Math.Clamp(paddle2Center.Position.Z, paddleMinZ, paddleMaxZ);
+            // Z-axis movement
+            paddle.Speed.Z = targetZ > paddle.Position.Z ? +Math.Abs(Ball.Speed.Z) : -Math.Abs(Ball.Speed.Z);
+            paddle.Speed.Z *= 2 * PaddleFatigue;
+            paddle.Position.Z = Math.Abs(paddle.Position.Z - targetZ) > Math.Abs(paddle.Speed.Z)
+                                ? paddle.Position.Z + paddle.Speed.Z
+                                : targetZ;
+            paddle.Position.Z = Math.Clamp(paddle.Position.Z, minZ, maxZ);
         }
         private void UpdateBall()
         {

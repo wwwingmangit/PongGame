@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace PongClient
 {
     internal static class Program
@@ -11,7 +13,12 @@ namespace PongClient
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new PongGameForm());
+
+            ILogger logger = new LoggerConfiguration()
+                                                .MinimumLevel.Debug()
+                                                .WriteTo.File("log.txt")
+                                                .CreateLogger();
+            Application.Run(new PongGameForm(logger));
         }
     }
 }

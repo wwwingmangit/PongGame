@@ -64,18 +64,20 @@ namespace PongGameServer
         private int _updateDelayInMSec;
         private int _winningScore;
 
-        public GameInstance(ILogger logger,
-            int updateDelayInMSec = UPDATE_DEFAULT_DELAY_IN_MSEC,
-            int winningScore = DEFAULT_WINNING_SCORE)
+        public GameInstance(Serilog.ILogger logger,
+                            int updateDelayInMSec = UPDATE_DEFAULT_DELAY_IN_MSEC,
+                            int winningScore = DEFAULT_WINNING_SCORE)
         {
             _logger = logger;
+
             _updateDelayInMSec = updateDelayInMSec;
             _winningScore = winningScore;
 
             _gameBoard = new Pong.GameBoard2D(new Size2D(BOARD_DEFAULT_WIDTH, BOARD_DEFAULT_HEIGHT),
                                               new Ball2D(new Position2D(), new Speed2D(), new Size2D(BALL_DEFAULT_WIDTH, BALL_DEFAULT_HEIGHT)),
                                               new Paddle2D(new Position2D(), new Speed2D(), new Size2D(PADDLE_DEFAULT_WIDTH, PADDLE_DEFAULT_HEIGHT)),
-                                              new Paddle2D(new Position2D(), new Speed2D(), new Size2D(PADDLE_DEFAULT_WIDTH, PADDLE_DEFAULT_HEIGHT)));
+                                              new Paddle2D(new Position2D(), new Speed2D(), new Size2D(PADDLE_DEFAULT_WIDTH, PADDLE_DEFAULT_HEIGHT)),
+                                              _logger);
 
             Status = StatusType.Initiated;
 
