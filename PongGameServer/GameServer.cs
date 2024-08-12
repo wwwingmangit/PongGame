@@ -10,9 +10,6 @@ namespace PongGameServer
         private ConcurrentDictionary<int, GameInstance> _games;
         private ILogger _logger;
 
-        private Thread? _serverThread;
-        private readonly object _serverIsRunningLock = new object();
-        private bool _serverIsRunning;
         public bool ServerIsRunning
         {
             get
@@ -31,12 +28,44 @@ namespace PongGameServer
                 }
             }
         }
+        public TimeSpan UpTime
+        {
+            get
+            {
+                {
+                    if (ServerIsRunning)
+                    {
+                        lock (_upTimeLock)
+                        {
+                            return DateTime.UtcNow - _startTime;
+                        }
+                    }
+                    else
+                    {
+                        return _upTime;
+                    }
+                }
+            }
+        }
+
+        private Thread? _serverThread;
+
+        private readonly object _serverIsRunningLock = new object();
+        private bool _serverIsRunning;
+
+        private readonly object _upTimeLock = new object();
+        private DateTime _startTime = new DateTime();
+        private TimeSpan _upTime = new TimeSpan();
+
         private bool _writeToConsole;
+
         public GameServer(ILogger logger, bool writeToConsole = true)
         {
             _logger = logger.ForContext<GameServer>();
 
             _games = new ConcurrentDictionary<int, GameInstance>();
+
+            //_startTime = DateTime.UtcNow;
 
             _writeToConsole = writeToConsole;
             
@@ -47,6 +76,11 @@ namespace PongGameServer
         {
             ServerIsRunning = true;
 
+            lock (_upTimeLock)
+            {
+                _startTime = DateTime.UtcNow;
+            }
+
             _serverThread = new Thread(Update);
             _serverThread.Start();
 
@@ -56,6 +90,12 @@ namespace PongGameServer
         public void StopServer()
         {
             _logger.Information("Stopping GameServer");
+
+            lock (_upTimeLock)
+            {
+                _upTime = DateTime.UtcNow - _startTime;
+            }
+
             StopGames();
 
             ServerIsRunning = false;
@@ -100,17 +140,6 @@ namespace PongGameServer
         {
             return _games.Values.ToList();
         }
-        public List<GameInstance> GetPlayingGames()
-        {
-            return _games.Values.Where(game => (game.Status == GameInstance.StatusType.Playing)).ToList();
-        }
-
-        public Pong.Score? GetGameScore(int gameId)
-        {
-            _games.TryGetValue(gameId, out var game);
-            return game?.Score;
-        }
-
         public void AddNewGame(int gameUpdateDelayInMSec, int GameWinningScore)
         {
             if (ServerIsRunning)

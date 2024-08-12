@@ -93,37 +93,6 @@ namespace PongGameServerTest
             Assert.AreEqual(initialGameCount - 1, _gameServer.GetGames().Count);
         }
 
-
-        [TestMethod]
-        public void GetPlayingGames_ReturnsOnlyPlayingGames()
-        {
-            _gameServer.StartServer();
-
-            _gameServer.AddNewGame(100, 10);
-            _gameServer.AddNewGame(100, 10);
-
-            Thread.Sleep(200);
-
-            var playingGames = _gameServer.GetPlayingGames();
-
-            CollectionAssert.AllItemsAreInstancesOfType(playingGames, typeof(GameInstance));
-            Assert.IsTrue(playingGames.All(game => game.Status == GameInstance.StatusType.Playing));
-        }
-
-        [TestMethod]
-        public void GetGameScore_ReturnsCorrectScore()
-        {
-            _gameServer.StartServer();
-
-            _gameServer.AddNewGame(100, 10);
-            int gameId = _gameServer.GetGames().First().GetHashCode();
-
-            var score = _gameServer.GetGameScore(gameId);
-
-            Assert.IsNotNull(score);
-            Assert.AreEqual(0, score.LeftScore);
-            Assert.AreEqual(0, score.RightScore);
-        }
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 
         [TestMethod]

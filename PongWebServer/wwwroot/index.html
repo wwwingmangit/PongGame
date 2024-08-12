@@ -45,6 +45,12 @@
             margin-bottom: 15px;
         }
 
+        #serverUpTime {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
         #gamesList {
             background-color: white;
             border-radius: 5px;
@@ -78,7 +84,10 @@
         <button onclick="addGame()">Add Game</button>
         <button onclick="stopAllGames()">Stop All Games</button>
         <button onclick="stopServer()">Stop Server</button>
+        <button onclick="startServer()">Start Server</button>
     </div>
+
+    <div id="serverUpTime"></div>
 
     <div id="gameCount"></div>
 
@@ -91,27 +100,39 @@
                 .then(response => {
                     const gamesList = document.getElementById('gamesList');
                     const gameCount = document.getElementById('gameCount');
+                    const serverUpTime = document.getElementById('serverUpTime');
                     gamesList.innerHTML = '';
 
-                    // Update game count
-                    const gamesCount = response.data.length;
-                    gameCount.textContent = `Number of games: ${gamesCount}`;
+                    // Update server uptime
+                    serverUpTime.textContent = `Server Uptime: ${response.data.serverUpTime}`;
 
-                    response.data.forEach(game => {
+                    // Update game count
+                    gameCount.textContent = `Number of games: ${response.data.games.length}`;
+
+                    response.data.games.forEach(game => {
                         const gameElement = document.createElement('div');
                         gameElement.className = 'game-item';
                         gameElement.innerHTML = `
-                            Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore} 
-                            (Duration: ${game.duration || 'N/A'})
-                            <button class="remove-btn" onclick="removeGame(${game.id})">Remove</button>
-                        `;
+                                Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore}
+                                (Duration: ${game.duration || 'N/A'})
+                                <button class="remove-btn" onclick="removeGame(${game.id})">Remove</button>
+                            `;
                         gamesList.appendChild(gameElement);
                     });
                 })
                 .catch(error => console.error('Error fetching games:', error));
         }
 
-        // Implement addGame, stopAllGames, stopServer, and removeGame functions
+        function startServer() {
+            axios.post('/pong/start')
+                .then(() => updateGamesList())
+                .catch(error => console.error('Error starting server:', error));
+        }
+        function stopServer() {
+            axios.post('/pong/stop')
+                .then(() => updateGamesList())
+                .catch(error => console.error('Error stopping server:', error));
+        }
         function addGame() {
             axios.post('/pong/addgame')
                 .then(() => updateGamesList())
@@ -125,21 +146,16 @@
         }
 
         function stopAllGames() {
-            axios.post('/pong/stopall')
+            axios.delete('/pong/stopall')
                 .then(() => updateGamesList())
                 .catch(error => console.error('Error stopping all games:', error));
         }
-        function stopServer() {
-            axios.post('/pong/stop')
-                .then(() => updateGamesList())
-                .catch(error => console.error('Error stopping server:', error));
-        }
-
-        // Update the list every 5 seconds
-        setInterval(updateGamesList, 5000);
 
         // Initial update
         updateGamesList();
+
+        // Update the list 
+        setInterval(updateGamesList, 1000);
     </script>
 </body>
 </html>

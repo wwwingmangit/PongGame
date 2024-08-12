@@ -112,7 +112,7 @@ namespace PongGameServer
 
             _score.Update(_gameBoard.Score);
 
-            _startTime = DateTime.Now;
+            _startTime = DateTime.UtcNow;
 
             Status = StatusType.Initiated;
 
@@ -132,7 +132,7 @@ namespace PongGameServer
                 // update game engine
                 _gameBoard.Update();
                 Score = _gameBoard.Score; // this is thread safe because the _gameBoard Score changes only during the Update
-                Duration = DateTime.Now - _startTime;
+                Duration = DateTime.UtcNow - _startTime;
 
                 // check if score evolved
                 if (oldScore.LeftScore != Score.LeftScore || oldScore.RightScore != Score.RightScore)

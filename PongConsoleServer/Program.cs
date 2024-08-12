@@ -1,9 +1,5 @@
-﻿using Pong;
-using Serilog;
-using Serilog.Core;
-using System;
+﻿using Serilog;
 using PongGameServer;
-
 
 namespace PongConsoleServer
 {
