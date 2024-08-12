@@ -12,11 +12,37 @@ public class PongController : ControllerBase
         _gameServer = gameServer;
     }
 
+    [HttpPost("start")]
+    public IActionResult StartServer()
+    {
+        _gameServer.StartServer();
+        return Ok("Server started");
+    }
+    [HttpPost("stop")]
+    public IActionResult StopServer()
+    {
+        _gameServer.StopServer();
+        return Ok("Server stopped");
+    }
+
     [HttpGet("games")]
     public IActionResult GetGames()
     {
         var games = _gameServer.GetGames();
-        return Ok(games.Select(g => new { Id = g.GetHashCode(), Score = g.Score }));
+        var serverUpTime = _gameServer.UpTime;
+
+        var response = new
+        {
+            serverUpTime = serverUpTime.ToString(@"dd\.hh\:mm\:ss"),
+            games = games.Select(g => new
+            {
+                id = g.GetHashCode(),
+                score = g.Score,
+                duration = g.Duration.ToString(@"hh\:mm\:ss")
+            })
+        };
+
+        return Ok(response);
     }
 
     [HttpPost("addgame")]
@@ -35,17 +61,11 @@ public class PongController : ControllerBase
         return Ok($"Game {id} removed");
     }
 
-    [HttpPost("stopall")]
+    [HttpDelete("stopall")]
     public IActionResult StopAllGames()
     {
         _gameServer.StopGames();
         return Ok("All games stopped");
     }
 
-    [HttpPost("stop")]
-    public IActionResult StopServer()
-    {
-        _gameServer.StopServer();
-        return Ok("Server stopped");
-    }
 }
