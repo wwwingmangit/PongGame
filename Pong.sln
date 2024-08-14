@@ -30,10 +30,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PongGameServer", "PongGameS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PongConsoleServer", "PongConsoleServer\PongConsoleServer.csproj", "{A86BCF51-2CD9-4948-8FF8-12A8FF78736A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PongWebServer", "PongWebServer\PongWebServer.csproj", "{69734A14-802D-4A01-9399-20CFCF924A16}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PongWebServer", "PongWebServer\PongWebServer.csproj", "{69734A14-802D-4A01-9399-20CFCF924A16}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E7638C1E-CFDB-479A-BE77-C966968996EC} = {E7638C1E-CFDB-479A-BE77-C966968996EC}
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PongConsoleLLM", "PongConsoleLLM\PongConsoleLLM.csproj", "{BEA7E602-E399-4A33-8F3F-6B2FFE3E943D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D8C178CB-0910-49FC-B51D-20C41F4C6AE4} = {D8C178CB-0910-49FC-B51D-20C41F4C6AE4}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PongLLM", "PongLLM\PongLLM.csproj", "{D8C178CB-0910-49FC-B51D-20C41F4C6AE4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -77,6 +84,14 @@ Global
 		{69734A14-802D-4A01-9399-20CFCF924A16}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69734A14-802D-4A01-9399-20CFCF924A16}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69734A14-802D-4A01-9399-20CFCF924A16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEA7E602-E399-4A33-8F3F-6B2FFE3E943D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEA7E602-E399-4A33-8F3F-6B2FFE3E943D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEA7E602-E399-4A33-8F3F-6B2FFE3E943D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEA7E602-E399-4A33-8F3F-6B2FFE3E943D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8C178CB-0910-49FC-B51D-20C41F4C6AE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8C178CB-0910-49FC-B51D-20C41F4C6AE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8C178CB-0910-49FC-B51D-20C41F4C6AE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8C178CB-0910-49FC-B51D-20C41F4C6AE4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
