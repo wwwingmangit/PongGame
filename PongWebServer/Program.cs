@@ -1,6 +1,6 @@
 using PongGameServer;
 using Serilog;
-using PongGameServer.Services;
+using PongLLM; // Ensure this namespace is included for LLMCommentService
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +19,7 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Services.AddSingleton<Serilog.ILogger>(Log.Logger);
 
-// Creat GameServer
+// Create GameServer
 builder.Services.AddSingleton<GameServer>(serviceProvider =>
 {
     var logger = serviceProvider.GetRequiredService<Serilog.ILogger>();
@@ -27,8 +27,15 @@ builder.Services.AddSingleton<GameServer>(serviceProvider =>
     return new GameServer(logger, writeToConsole);
 });
 
+// Register LLMCommentService with the logger
+builder.Services.AddSingleton<PongGameServer.Services.LLMCommentService>(serviceProvider =>
+{
+    var logger = serviceProvider.GetRequiredService<Serilog.ILogger>();
+    return new PongGameServer.Services.LLMCommentService(logger);
+});
+
 // This will start the server automatically
-builder.Services.AddHostedService<GameServerHostedService>();
+builder.Services.AddHostedService<PongGameServer.Services.GameServerHostedService>();
 
 var app = builder.Build();
 

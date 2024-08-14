@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PongGameServer\PongGameServer.csproj" />
+    <ProjectReference Include="..\PongLLM\PongLLM.csproj" />
   </ItemGroup>
 
 </Project>

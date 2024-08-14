@@ -39,13 +39,23 @@
                 background-color: #2980b9;
             }
 
-        #gameCount {
+        #llmComment {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #e0f7fa;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #serverUpTime {
             text-align: center;
             font-size: 1.2em;
             margin-bottom: 15px;
         }
 
-        #serverUpTime {
+        #gameCount {
             text-align: center;
             font-size: 1.2em;
             margin-bottom: 15px;
@@ -87,6 +97,8 @@
         <button onclick="startServer()">Start Server</button>
     </div>
 
+    <div id="llmComment">Loading comment...</div>
+
     <div id="serverUpTime"></div>
 
     <div id="gameCount"></div>
@@ -113,14 +125,27 @@
                         const gameElement = document.createElement('div');
                         gameElement.className = 'game-item';
                         gameElement.innerHTML = `
-                                Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore}
-                                (Duration: ${game.duration || 'N/A'})
-                                <button class="remove-btn" onclick="removeGame(${game.id})">Remove</button>
-                            `;
+                                    Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore}
+                                    (Duration: ${game.duration || 'N/A'})
+                                    <button class="remove-btn" onclick="removeGame(${game.id})">Remove</button>
+                                `;
                         gamesList.appendChild(gameElement);
                     });
                 })
                 .catch(error => console.error('Error fetching games:', error));
+        }
+
+        function updateLLMComment() {
+            axios.get('/pong/llmcomment') // Assuming you have an endpoint to get the LLM comment
+                .then(response => {
+                    const llmComment = document.getElementById('llmComment');
+                    llmComment.textContent = response.data.comment;
+                })
+                .catch(error => {
+                    console.error('Error fetching LLM comment:', error);
+                    const llmComment = document.getElementById('llmComment');
+                    llmComment.textContent = "Failed to load comment.";
+                });
         }
 
         function startServer() {
@@ -151,11 +176,18 @@
                 .catch(error => console.error('Error stopping all games:', error));
         }
 
-        // Initial update
+        // Initial updates
         updateGamesList();
+        updateLLMComment();
 
-        // Update the list 
-        setInterval(updateGamesList, 1000);
+        // Update the list and LLM comment every second
+        setInterval(() => {
+            updateGamesList();
+        }, 1000);
+        // Update the list and LLM comment every second
+        setInterval(() => {
+            updateLLMComment();
+        }, 5000);
     </script>
 </body>
 </html>

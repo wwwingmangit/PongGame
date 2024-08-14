@@ -14,8 +14,10 @@ namespace PongLLM
         private const string INIT_PROMPT =
             "You are a data analyst specializing in sports and video games.\n" +
             "Here are my instructions that you will follow precisely.\n" +
-            "I will provide you data you in JSON format, including server uptime and game stats. Each game entry has an ID, scores, and duration.\n" +
+            "I will provide you data, including server uptime and game stats. Each game entry has an ID, scores, and duration.\n" +
             "Your task is to provide an answer. Your answer is a single phrase (max 20 words).\n";
+
+            //"I will provide you data you in JSON format, including server uptime and game stats. Each game entry has an ID, scores, and duration.\n" +
 
         public enum PersonalityType
         {
@@ -45,18 +47,37 @@ namespace PongLLM
         private readonly object _personalityLock = new object();
         private PersonalityType _personality;
 
+        public string Conversation
+        {
+            get
+            {
+                lock (_conversationLock)
+                {
+                    return _conversation;
+                }
+            }
+
+            protected set
+            {
+                lock (_conversationLock)
+                {
+                    _conversation = value;
+                }
+            }
+        }
+        private readonly object _conversationLock = new object();
         private string _conversation;
 
         public PongLLMCommentator(ILogger logger)
         {
             _logger = logger.ForContext<PongLLMCommentator>();
 
-            _conversation = "";
+            Conversation = "";
 
             _logger.Information("PongLLMCommentator created with default settings.");
         }
 
-        public async Task<bool> LoadModel()
+        protected async Task<bool> LoadModel()
         {
             var requestBody = new
             {
@@ -108,7 +129,7 @@ namespace PongLLM
             _logger.Debug("Initialization prompt sent: {Prompt}", prompt);
             _logger.Debug("Initialization response received: {Response}", response);
 
-            _conversation = prompt + "\n" + response + "\n";
+            Conversation = prompt + "\n" + response + "\n";
 
             _logger.Information("PongLLMCommentator initialized successfully with PersonalityType: {PersonalityType}", Personality.ToString());
             return response;
@@ -120,13 +141,13 @@ namespace PongLLM
 
             Personality = personality;
 
-            _conversation = "";  // Clear the conversation history
+            Conversation = "";  // Clear the conversation history
             string response = await GetOllamaResponse(prompt);
 
             _logger.Debug("Reset prompt sent: {Prompt}", prompt);
             _logger.Debug("Response received after reset: {Response}", response);
 
-            _conversation = prompt + "\n" + response + "\n";
+            Conversation = prompt + "\n" + response + "\n";
 
             _logger.Information("Conversation reset successfully. Personality is now {Personality}", Personality.ToString());
             return response;
@@ -135,14 +156,14 @@ namespace PongLLM
         public async Task<string> GetOllamaResponse(string request)
         {
             _logger.Information("Processing Ollama response for the request: {Request}", request);
-            _conversation += request + "\n";
+            Conversation += request + "\n";
 
             var requestBody = new
             {
                 model = OLLAMA_MODEL,
-                prompt = _conversation,
+                prompt = Conversation,
                 stream = false,
-                system = "You have a " + Personality.ToString() + " personality"
+                system = "You have a " + Personality.ToString() + " personality. Remember your task is to provide an answer. Your answer is a single phrase (max 20 words)."
             };
 
             var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
@@ -157,7 +178,7 @@ namespace PongLLM
                 var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
                 var stringResponse = jsonResponse.GetProperty("response").GetString();
 
-                _conversation += stringResponse + "\n";
+                Conversation += stringResponse + "\n";
 
                 _logger.Information("Received response from Ollama API: {Response}", stringResponse);
                 return stringResponse;
