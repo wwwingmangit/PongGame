@@ -135,11 +135,13 @@ namespace PongLLM
             return _initialResponse;
         }
 
-        public async Task<string> ResetConversation(PersonalityType personality, string prompt = INIT_PROMPT)
+        public async Task<string> ResetConversation(PersonalityType personality)
         {
             _logger.Information("Resetting conversation with a new prompt.");
 
             Personality = personality;
+
+            string prompt = INIT_PROMPT
 
             _recentExchanges.Clear();  // Clear the recent exchanges
             _initialResponse = await GetOllamaResponse(prompt);

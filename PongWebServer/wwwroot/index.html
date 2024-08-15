@@ -18,6 +18,7 @@
         h1 {
             color: #2c3e50;
             text-align: center;
+            margin-bottom: 40px;
         }
 
         .controls {
@@ -32,11 +33,12 @@
             border: none;
             padding: 10px 15px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.1s;
         }
 
             button:hover {
                 background-color: #2980b9;
+                transform: scale(1.05);
             }
 
         #llmComment {
@@ -49,13 +51,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        #serverUpTime {
-            text-align: center;
-            font-size: 1.2em;
-            margin-bottom: 15px;
-        }
-
-        #gameCount {
+        #serverUpTime, #gameCount {
             text-align: center;
             font-size: 1.2em;
             margin-bottom: 15px;
@@ -69,6 +65,9 @@
         }
 
         .game-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 1px solid #eee;
             padding: 10px 0;
         }
@@ -77,14 +76,38 @@
                 border-bottom: none;
             }
 
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 150px;
+            font-weight: bold;
+        }
+
+        .duration {
+            font-size: 0.9em;
+            color: #777;
+        }
+
         .remove-btn {
             background-color: #e74c3c;
-            float: right;
+            border: none;
+            padding: 5px 10px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
 
             .remove-btn:hover {
                 background-color: #c0392b;
             }
+
+        #personalitySelect {
+            display: block;
+            margin: 20px auto;
+            padding: 10px;
+            font-size: 1em;
+        }
     </style>
 </head>
 <body>
@@ -132,8 +155,13 @@
                         const gameElement = document.createElement('div');
                         gameElement.className = 'game-item';
                         gameElement.innerHTML = `
-                                Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore}
-                                (Duration: ${game.duration || 'N/A'})
+                                <span>Game ${game.id}</span>
+                                <div class="score-container">
+                                    <span>${game.score.leftScore}</span>
+                                    <span>-</span>
+                                    <span>${game.score.rightScore}</span>
+                                </div>
+                                <span class="duration">(${game.duration || 'N/A'})</span>
                                 <button class="remove-btn" onclick="removeGame(${game.id})">Remove</button>
                             `;
                         gamesList.appendChild(gameElement);
