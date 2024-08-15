@@ -141,7 +141,7 @@ namespace PongLLM
 
             Personality = personality;
 
-            string prompt = INIT_PROMPT
+            string prompt = INIT_PROMPT;
 
             _recentExchanges.Clear();  // Clear the recent exchanges
             _initialResponse = await GetOllamaResponse(prompt);
