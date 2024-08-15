@@ -105,6 +105,13 @@
 
     <div id="gamesList"></div>
 
+    <label for="personalitySelect">Select Commentator Personality:</label>
+    <select id="personalitySelect" onchange="updatePersonality()">
+        <option value="Serious">Serious</option>
+        <option value="Hilarious">Hilarious</option>
+        <option value="Depressed">Depressed</option>
+    </select>
+
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script>
         function updateGamesList() {
@@ -125,10 +132,10 @@
                         const gameElement = document.createElement('div');
                         gameElement.className = 'game-item';
                         gameElement.innerHTML = `
-                                    Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore}
-                                    (Duration: ${game.duration || 'N/A'})
-                                    <button class="remove-btn" onclick="removeGame(${game.id})">Remove</button>
-                                `;
+                                Game ${game.id}: ${game.score.leftScore} - ${game.score.rightScore}
+                                (Duration: ${game.duration || 'N/A'})
+                                <button class="remove-btn" onclick="removeGame(${game.id})">Remove</button>
+                            `;
                         gamesList.appendChild(gameElement);
                     });
                 })
@@ -136,7 +143,7 @@
         }
 
         function updateLLMComment() {
-            axios.get('/pong/llmcomment') // Assuming you have an endpoint to get the LLM comment
+            axios.get('/pong/llmcomment')
                 .then(response => {
                     const llmComment = document.getElementById('llmComment');
                     llmComment.textContent = response.data.comment;
@@ -148,16 +155,28 @@
                 });
         }
 
+        function updatePersonality() {
+            const personality = document.getElementById('personalitySelect').value;
+            const formData = new FormData();
+            formData.append('personality', personality);
+
+            axios.post('/pong/setPersonality', formData)
+                .then(() => console.log('Personality updated'))
+                .catch(error => console.error('Error updating personality:', error));
+        }
+
         function startServer() {
             axios.post('/pong/start')
                 .then(() => updateGamesList())
                 .catch(error => console.error('Error starting server:', error));
         }
+
         function stopServer() {
             axios.post('/pong/stop')
                 .then(() => updateGamesList())
                 .catch(error => console.error('Error stopping server:', error));
         }
+
         function addGame() {
             axios.post('/pong/addgame')
                 .then(() => updateGamesList())
@@ -184,7 +203,7 @@
         setInterval(() => {
             updateGamesList();
         }, 1000);
-        // Update the list and LLM comment every second
+
         setInterval(() => {
             updateLLMComment();
         }, 5000);

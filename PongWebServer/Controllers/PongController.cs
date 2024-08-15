@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PongGameServer;
 using PongGameServer.Services;
+using PongLLM;
+using System.Linq;
+using System.Threading.Tasks;
 
 [ApiController]
 [Route("[controller]")]
@@ -59,7 +62,25 @@ public class PongController : ControllerBase
         return Ok("All games stopped");
     }
 
-    // Refactored method to get the game stats
+    [HttpGet("llmcomment")]
+    public async Task<IActionResult> GetLLMComment()
+    {
+        var gameStats = GetGameStats();
+        var comment = await _llmCommentService.GenerateCommentAsync(gameStats);
+        return Ok(new { comment });
+    }
+
+    [HttpPost("setPersonality")]
+    public IActionResult SetPersonality([FromForm] string personality)
+    {
+        if (Enum.TryParse<PongLLMCommentator.PersonalityType>(personality, true, out var parsedPersonality))
+        {
+            _llmCommentService.SetPersonality(parsedPersonality);
+            return Ok("Personality updated");
+        }
+        return BadRequest("Invalid personality type");
+    }
+
     private object GetGameStats()
     {
         var games = _gameServer.GetGames();
@@ -77,14 +98,5 @@ public class PongController : ControllerBase
         };
 
         return response;
-    }
-
-    // New endpoint to get the latest LLM comment
-    [HttpGet("llmcomment")]
-    public async Task<IActionResult> GetLLMComment()
-    {
-        var gameStats = GetGameStats();
-        var comment = await _llmCommentService.GenerateCommentAsync(gameStats);
-        return Ok(new { comment });
     }
 }
