@@ -15,9 +15,9 @@ namespace PongLLM
             "You are a data analyst specializing in sports and video games.\n" +
             "Here are my instructions that you will follow precisely.\n" +
             "I will provide you data, including server uptime and game stats. Each game entry has an ID, scores, and duration.\n" +
-            "Your task is to provide an answer. Your answer is a single phrase (max 20 words).\n";
-
-            //"I will provide you data you in JSON format, including server uptime and game stats. Each game entry has an ID, scores, and duration.\n" +
+            "Your task is to provide a comment; this comment is a single phrase (max 20 words).\n" +
+            "The style of the comment depends on your personality..\n" +
+            "You comments MUST BE GIVEN IN FRENCH..\n";
 
         public enum PersonalityType
         {
@@ -47,13 +47,15 @@ namespace PongLLM
         private readonly object _personalityLock = new object();
         private PersonalityType _personality;
 
+        private readonly List<(string userInput, string response)> _recentExchanges = new List<(string, string)>();
+
         public string Conversation
         {
             get
             {
                 lock (_conversationLock)
                 {
-                    return _conversation;
+                    return BuildConversationContext();
                 }
             }
 
@@ -61,19 +63,20 @@ namespace PongLLM
             {
                 lock (_conversationLock)
                 {
-                    _conversation = value;
+                    if (_recentExchanges.Count > 3)
+                    {
+                        _recentExchanges.RemoveAt(0); // Remove the oldest exchange if we already have 3
+                    }
+                    _recentExchanges.Add((ExtractUserInput(value), ExtractResponse(value)));
                 }
             }
         }
         private readonly object _conversationLock = new object();
-        private string _conversation;
+        private string _initialResponse;
 
         public PongLLMCommentator(ILogger logger)
         {
             _logger = logger.ForContext<PongLLMCommentator>();
-
-            Conversation = "";
-
             _logger.Information("PongLLMCommentator created with default settings.");
         }
 
@@ -110,7 +113,7 @@ namespace PongLLM
             }
         }
 
-        public async Task<string> Initialize(PersonalityType personality, string prompt = INIT_PROMPT)
+        public async Task<string> Initialize(PersonalityType personality = PersonalityType.Serious, string prompt = INIT_PROMPT)
         {
             Personality = personality;
             _logger.Information("Initializing PongLLMCommentator with PersonalityType: {PersonalityType}", Personality.ToString());
@@ -124,15 +127,12 @@ namespace PongLLM
             }
             _logger.Debug("Initialization {Model} model loaded into memory", OLLAMA_MODEL);
 
-            string response = await GetOllamaResponse(prompt);
+            _initialResponse = await GetOllamaResponse(prompt);
 
             _logger.Debug("Initialization prompt sent: {Prompt}", prompt);
-            _logger.Debug("Initialization response received: {Response}", response);
+            _logger.Debug("Initialization response received: {Response}", _initialResponse);
 
-            Conversation = prompt + "\n" + response + "\n";
-
-            _logger.Information("PongLLMCommentator initialized successfully with PersonalityType: {PersonalityType}", Personality.ToString());
-            return response;
+            return _initialResponse;
         }
 
         public async Task<string> ResetConversation(PersonalityType personality, string prompt = INIT_PROMPT)
@@ -141,27 +141,23 @@ namespace PongLLM
 
             Personality = personality;
 
-            Conversation = "";  // Clear the conversation history
-            string response = await GetOllamaResponse(prompt);
+            _recentExchanges.Clear();  // Clear the recent exchanges
+            _initialResponse = await GetOllamaResponse(prompt);
 
             _logger.Debug("Reset prompt sent: {Prompt}", prompt);
-            _logger.Debug("Response received after reset: {Response}", response);
+            _logger.Debug("Response received after reset: {Response}", _initialResponse);
 
-            Conversation = prompt + "\n" + response + "\n";
-
-            _logger.Information("Conversation reset successfully. Personality is now {Personality}", Personality.ToString());
-            return response;
+            return _initialResponse;
         }
 
-        public async Task<string> GetOllamaResponse(string request)
+        public async Task<string> GetOllamaResponse(string userInput)
         {
-            _logger.Information("Processing Ollama response for the request: {Request}", request);
-            Conversation += request + "\n";
+            _logger.Information("Processing Ollama response for the request: {Request}", userInput);
 
             var requestBody = new
             {
                 model = OLLAMA_MODEL,
-                prompt = Conversation,
+                prompt = BuildConversationContext() + $"Human: {userInput}\n",
                 stream = false,
                 system = "You have a " + Personality.ToString() + " personality. Remember your task is to provide an answer. Your answer is a single phrase (max 20 words)."
             };
@@ -177,8 +173,11 @@ namespace PongLLM
 
                 var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
                 var stringResponse = jsonResponse.GetProperty("response").GetString();
+                // Remove all quotes from the string response
+                stringResponse = stringResponse.Replace("\"", "");
 
-                Conversation += stringResponse + "\n";
+                // Update the conversation history
+                Conversation = $"Human: {userInput}\nAssistant: {stringResponse}";
 
                 _logger.Information("Received response from Ollama API: {Response}", stringResponse);
                 return stringResponse;
@@ -193,6 +192,36 @@ namespace PongLLM
                 _logger.Error(ex, "An unexpected error occurred. Request: {RequestBody}", requestBody);
                 return "An unexpected error occurred.";
             }
+        }
+
+        private string BuildConversationContext()
+        {
+            StringBuilder conversationBuilder = new StringBuilder();
+            conversationBuilder.AppendLine($"Human: {INIT_PROMPT}");
+            conversationBuilder.AppendLine($"Assistant: {_initialResponse}");
+
+            foreach (var exchange in _recentExchanges)
+            {
+                conversationBuilder.AppendLine($"Human: {exchange.userInput}");
+                conversationBuilder.AppendLine($"Assistant: {exchange.response}");
+            }
+
+            return conversationBuilder.ToString();
+        }
+
+        private string ExtractUserInput(string conversation)
+        {
+            // Assuming the user input is formatted as "Human: <input>"
+            int start = conversation.LastIndexOf("Human: ") + 7;
+            int end = conversation.IndexOf("\n", start);
+            return conversation.Substring(start, end - start);
+        }
+
+        private string ExtractResponse(string conversation)
+        {
+            // Assuming the response is formatted as "Assistant: <response>"
+            int start = conversation.LastIndexOf("Assistant: ") + 11;
+            return conversation.Substring(start).Trim();
         }
     }
 }

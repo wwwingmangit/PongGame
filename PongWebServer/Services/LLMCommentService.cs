@@ -13,7 +13,7 @@ namespace PongGameServer.Services
         {
             _logger = logger;
             _commentator = new PongLLMCommentator(_logger);
-            _commentator.Initialize(PongLLMCommentator.PersonalityType.Depressed); // Default initialization
+            _commentator.Initialize(); // Default initialization
         }
 
         public async Task<string> GenerateCommentAsync(object gameStats)
