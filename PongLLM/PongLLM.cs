@@ -36,7 +36,7 @@ namespace PongLLM
                 }
             }
 
-            protected set
+            set
             {
                 lock (_personalityLock)
                 {
