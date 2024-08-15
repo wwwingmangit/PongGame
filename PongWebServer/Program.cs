@@ -1,13 +1,11 @@
 using PongGameServer;
-using Serilog;
 using PongGameServer.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// Add services to the container
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -17,9 +15,9 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File("log.txt")
     .CreateLogger();
 
-builder.Services.AddSingleton<Serilog.ILogger>(Log.Logger);
+builder.Services.AddSingleton(Log.Logger);
 
-// Creat GameServer
+// Create GameServer
 builder.Services.AddSingleton<GameServer>(serviceProvider =>
 {
     var logger = serviceProvider.GetRequiredService<Serilog.ILogger>();
@@ -27,12 +25,19 @@ builder.Services.AddSingleton<GameServer>(serviceProvider =>
     return new GameServer(logger, writeToConsole);
 });
 
+// Register LLMCommentService with the logger
+builder.Services.AddSingleton<LLMCommentService>(serviceProvider =>
+{
+    var logger = serviceProvider.GetRequiredService<Serilog.ILogger>();
+    return new LLMCommentService(logger);
+});
+
 // This will start the server automatically
 builder.Services.AddHostedService<GameServerHostedService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -40,11 +45,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.UseStaticFiles();
 
 app.Run();

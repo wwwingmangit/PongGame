@@ -1,15 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PongGameServer;
+using PongGameServer.Services;
+using PongLLM;
+using System.Linq;
+using System.Threading.Tasks;
 
 [ApiController]
 [Route("[controller]")]
 public class PongController : ControllerBase
 {
     private readonly GameServer _gameServer;
+    private readonly LLMCommentService _llmCommentService;
 
-    public PongController(GameServer gameServer)
+    public PongController(GameServer gameServer, LLMCommentService llmCommentService)
     {
         _gameServer = gameServer;
+        _llmCommentService = llmCommentService;
     }
 
     [HttpPost("start")]
@@ -18,6 +24,7 @@ public class PongController : ControllerBase
         _gameServer.StartServer();
         return Ok("Server started");
     }
+
     [HttpPost("stop")]
     public IActionResult StopServer()
     {
@@ -28,20 +35,7 @@ public class PongController : ControllerBase
     [HttpGet("games")]
     public IActionResult GetGames()
     {
-        var games = _gameServer.GetGames();
-        var serverUpTime = _gameServer.UpTime;
-
-        var response = new
-        {
-            serverUpTime = serverUpTime.ToString(@"dd\.hh\:mm\:ss"),
-            games = games.Select(g => new
-            {
-                id = g.GetHashCode(),
-                score = g.Score,
-                duration = g.Duration.ToString(@"hh\:mm\:ss")
-            })
-        };
-
+        var response = GetGameStats();
         return Ok(response);
     }
 
@@ -68,4 +62,41 @@ public class PongController : ControllerBase
         return Ok("All games stopped");
     }
 
+    [HttpGet("llmcomment")]
+    public async Task<IActionResult> GetLLMComment()
+    {
+        var gameStats = GetGameStats();
+        var comment = await _llmCommentService.GenerateCommentAsync(gameStats);
+        return Ok(new { comment });
+    }
+
+    [HttpPost("setPersonality")]
+    public IActionResult SetPersonality([FromForm] string personality)
+    {
+        if (Enum.TryParse<PongLLMCommentator.PersonalityType>(personality, true, out var parsedPersonality))
+        {
+            _llmCommentService.SetPersonality(parsedPersonality);
+            return Ok("Personality updated");
+        }
+        return BadRequest("Invalid personality type");
+    }
+
+    private object GetGameStats()
+    {
+        var games = _gameServer.GetGames();
+        var serverUpTime = _gameServer.UpTime;
+
+        var response = new
+        {
+            serverUpTime = serverUpTime.ToString(@"dd\.hh\:mm\:ss"),
+            games = games.Select(g => new
+            {
+                id = g.GetHashCode(),
+                score = g.Score,
+                duration = g.Duration.ToString(@"hh\:mm\:ss")
+            })
+        };
+
+        return response;
+    }
 }

@@ -9,6 +9,7 @@ namespace PongGameServer
     {
         private ConcurrentDictionary<int, GameInstance> _games;
         private ILogger _logger;
+        private Thread? _serverThread;
 
         public bool ServerIsRunning
         {
@@ -47,18 +48,14 @@ namespace PongGameServer
                 }
             }
         }
-
-        private Thread? _serverThread;
-
+        
         private readonly object _serverIsRunningLock = new object();
         private bool _serverIsRunning;
-
         private readonly object _upTimeLock = new object();
         private DateTime _startTime = new DateTime();
         private TimeSpan _upTime = new TimeSpan();
 
         private bool _writeToConsole;
-
         public GameServer(ILogger logger, bool writeToConsole = true)
         {
             _logger = logger.ForContext<GameServer>();
@@ -71,7 +68,6 @@ namespace PongGameServer
             
             _logger.Information("GameServer created");
         }
-
         public void StartServer()
         {
             ServerIsRunning = true;
@@ -86,7 +82,6 @@ namespace PongGameServer
 
             _logger.Information("GameServer started");
         }
-
         public void StopServer()
         {
             _logger.Information("Stopping GameServer");
