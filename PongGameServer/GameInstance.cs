@@ -93,8 +93,6 @@ namespace PongGameServer
         private int _updateDelayInMSec;
         private int _winningScore;
         private DateTime _startTime;
-
-
         public GameInstance(Serilog.ILogger logger,
                             int updateDelayInMSec = UPDATE_DEFAULT_DELAY_IN_MSEC,
                             int winningScore = DEFAULT_WINNING_SCORE)
