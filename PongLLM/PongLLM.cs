@@ -10,14 +10,14 @@ namespace PongLLM
         private readonly HttpClient client = new HttpClient();
         private const string OLLAMA_API_URL = "http://localhost:11434/api/generate";
         private string OLLAMA_MODEL = "llama3";
+        private const int ROLLING_LLM_WINDOW_SIZE = 3; // initial prompt + 3 last answers
 
         private const string INIT_PROMPT =
-            "You are a data analyst specializing in sports and video games.\n" +
-            "Here are my instructions that you will follow precisely.\n" +
-            "I will provide you data, including server uptime and game stats. Each game entry has an ID, scores, and duration.\n" +
-            "Your task is to provide a comment; this comment is a single phrase (max 20 words).\n" +
-            "The style of the comment depends on your personality..\n" +
-            "You comments MUST BE GIVEN IN FRENCH..\n";
+            "You are a radio commentator and data analyst expert in video games.\n" +
+            "Your task is to make a one phrase comment based on your personality and on the data that I will provide you.\n" +
+            "The data is in json format, it contains the a server up time (in DD.HH:MM:SS format), and a list of stats of auto playing pong games.\n" +
+            "Each game stat contains the game ID, the game left and right scores, and the game duration.\n" +
+            "The comment you will provide will not exceed 20 words. And will be given in French\n";
 
         public enum PersonalityType
         {
@@ -63,16 +63,16 @@ namespace PongLLM
             {
                 lock (_conversationLock)
                 {
-                    if (_recentExchanges.Count > 3)
+                    if (_recentExchanges.Count > ROLLING_LLM_WINDOW_SIZE)
                     {
-                        _recentExchanges.RemoveAt(0); // Remove the oldest exchange if we already have 3
+                        _recentExchanges.RemoveAt(0); // Remove the oldest exchange 
                     }
                     _recentExchanges.Add((ExtractUserInput(value), ExtractResponse(value)));
                 }
             }
         }
         private readonly object _conversationLock = new object();
-        private string _initialResponse;
+        private string? _initialResponse;
 
         public PongLLMCommentator(ILogger logger)
         {
@@ -161,7 +161,7 @@ namespace PongLLM
                 model = OLLAMA_MODEL,
                 prompt = BuildConversationContext() + $"Human: {userInput}\n",
                 stream = false,
-                system = "You have a " + Personality.ToString() + " personality. Remember your task is to provide an answer. Your answer is a single phrase (max 20 words)."
+                system = "You will follow the orders given (1 phrase comment, max 20 words, in French) and have a " + Personality.ToString() + " personality."
             };
 
             var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
@@ -174,12 +174,12 @@ namespace PongLLM
                 string responseBody = await response.Content.ReadAsStringAsync();
 
                 var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
-                var stringResponse = jsonResponse.GetProperty("response").GetString();
+                var stringResponse = jsonResponse.GetProperty("response").GetString().Replace("\"", "");
                 // Remove all quotes from the string response
-                stringResponse = stringResponse.Replace("\"", "");
+                //stringResponse = stringResponse.Replace("\"", "");
 
                 // Update the conversation history
-                Conversation = $"Human: {userInput}\nAssistant: {stringResponse}";
+                Conversation = $"Human: {userInput}\nLLM: {stringResponse}";
 
                 _logger.Information("Received response from Ollama API: {Response}", stringResponse);
                 return stringResponse;
@@ -200,12 +200,12 @@ namespace PongLLM
         {
             StringBuilder conversationBuilder = new StringBuilder();
             conversationBuilder.AppendLine($"Human: {INIT_PROMPT}");
-            conversationBuilder.AppendLine($"Assistant: {_initialResponse}");
+            conversationBuilder.AppendLine($"LLM: {_initialResponse}");
 
             foreach (var exchange in _recentExchanges)
             {
                 conversationBuilder.AppendLine($"Human: {exchange.userInput}");
-                conversationBuilder.AppendLine($"Assistant: {exchange.response}");
+                conversationBuilder.AppendLine($"LLM: {exchange.response}");
             }
 
             return conversationBuilder.ToString();
@@ -222,7 +222,7 @@ namespace PongLLM
         private string ExtractResponse(string conversation)
         {
             // Assuming the response is formatted as "Assistant: <response>"
-            int start = conversation.LastIndexOf("Assistant: ") + 11;
+            int start = conversation.LastIndexOf("LLM: ") + 11;
             return conversation.Substring(start).Trim();
         }
     }

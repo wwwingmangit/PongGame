@@ -155,15 +155,15 @@
                         const gameElement = document.createElement('div');
                         gameElement.className = 'game-item';
                         gameElement.innerHTML = `
-                                <span>Game ${game.id}</span>
-                                <div class="score-container">
-                                    <span>${game.score.leftScore}</span>
-                                    <span>-</span>
-                                    <span>${game.score.rightScore}</span>
-                                </div>
-                                <span class="duration">(${game.duration || 'N/A'})</span>
-                                <button class="remove-btn" onclick="removeGame(${game.id})">Remove</button>
-                            `;
+                                    <span>Game ${game.id}</span>
+                                    <div class="score-container">
+                                        <span>${game.score.leftScore}</span>
+                                        <span>-</span>
+                                        <span>${game.score.rightScore}</span>
+                                    </div>
+                                    <span class="duration">(${game.duration || 'N/A'})</span>
+                                    <button class="remove-btn" onclick="removeGame(${game.id})">Remove</button>
+                                `;
                         gamesList.appendChild(gameElement);
                     });
                 })
@@ -174,11 +174,16 @@
             axios.get('/pong/llmcomment')
                 .then(response => {
                     const llmComment = document.getElementById('llmComment');
-                    llmComment.textContent = response.data.comment;
+                    if (typeof response.data.comment === 'string' && response.data.comment.startsWith('{')) {
+                        // Parse the JSON or handle it
+                        console.error('Unexpected JSON:', response.data.comment);
+                        llmComment.textContent = "Unexpected response format.";
+                    } else {
+                        llmComment.textContent = response.data.comment;
+                    }
                 })
                 .catch(error => {
                     console.error('Error fetching LLM comment:', error);
-                    const llmComment = document.getElementById('llmComment');
                     llmComment.textContent = "Failed to load comment.";
                 });
         }

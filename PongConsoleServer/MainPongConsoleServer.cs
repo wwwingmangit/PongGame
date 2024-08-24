@@ -3,7 +3,7 @@ using PongGameServer;
 
 namespace PongConsoleServer
 {
-    class Program
+    class MainPongConsoleServer
     {
         static void Main()
         {

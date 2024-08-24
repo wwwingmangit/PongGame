@@ -1,7 +1,7 @@
 ﻿using Serilog;
 using PongLLM;
 
-class Program
+class MainPongConsoleLLM
 {
     static async Task Main(string[] args)
     {
