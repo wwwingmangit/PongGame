@@ -1,6 +1,8 @@
 ﻿using Serilog;
 using System.Text.Json;
 using System.Text;
+using Newtonsoft.Json;
+using System.Net;
 
 namespace PongLLM
 {
@@ -11,73 +13,83 @@ namespace PongLLM
         Depressed
     }
 
-    public class LLMInteraction
+    public class ChatContext
     {
-        public string Input { get; protected set; }
-        public string Output { get; set; }
-        public PersonalityType Personality { get; protected set; }
-        public LLMInteraction(string input, string output, PersonalityType personality)
-        {
-            Input = input;
-            Output = output;
-            Personality = personality;
-        }
-        public LLMInteraction(string input, PersonalityType personality)
-        {
-            Input = input;
-            Output = string.Empty;
-            Personality = personality;
-        }
+        [JsonProperty("model")]
+        public string Model { get; set; }
+
+        [JsonProperty("created_at")]
+        public DateTime CreatedAt { get; set; }
+
+        [JsonProperty("message")]
+        public LLMMessage Message { get; set; }
+
+        [JsonProperty("done_reason")]
+        public string DoneReason { get; set; }
+
+        [JsonProperty("done")]
+        public bool Done { get; set; }
     }
 
-    public class LLMConversation
+    public class LLMMessage
     {
-        public LLMInteraction InitialInteraction { get; private set; }
-        public List<LLMInteraction> InteractionList { get; private set; }
-        private int _conversationMaxLength;
+        [JsonProperty("role")]
+        public string Role { get; set; }
 
-        public LLMConversation(string initialPrompt, string initialResponse, PersonalityType initialPersonality, int maxSize)
+        [JsonProperty("content")]
+        public string Content { get; set; }
+    }
+
+    public class LLMMessageHistory
+    {
+        private readonly List<LLMMessage> _messages = new List<LLMMessage>();
+        private readonly int _maxSize;
+        private readonly object _lock = new object();
+
+        public LLMMessageHistory(int maxSize)
         {
-            InitialInteraction = new LLMInteraction(initialPrompt, initialResponse, initialPersonality);
-            InteractionList = new List<LLMInteraction>();
-
-            _conversationMaxLength = maxSize;
+            _maxSize = maxSize;
         }
 
-        public void AddInteractionInput(string input, PersonalityType personality)
+        public void AddMessage(LLMMessage message)
         {
-            if (InteractionList.Count > _conversationMaxLength)
+            lock (_lock)
             {
-                InteractionList.RemoveAt(0);
+                _messages.Add(message);
+                TrimHistory();
             }
-
-            InteractionList.Add(new LLMInteraction(input, personality));
         }
 
-        public void AddInteractionOutput(string output)
+        public LLMMessage[] GetMessages()
         {
-            if (InteractionList.Count > 0)
+            lock (_lock)
             {
-                InteractionList.Last().Output = output;
+                return _messages.ToArray();
             }
-            else
+        }
+
+        private void TrimHistory()
+        {
+            if (_messages.Count <= _maxSize) return;
+
+            while (_messages.Count > _maxSize)
             {
-                // throw exception
+                _messages.RemoveAt(2); // don't remove initial prompt and answer 
+                _messages.RemoveAt(2);
             }
         }
     }
-
 
     public class PongLLMCommentator
     {
+
         private readonly ILogger _logger;
         private readonly HttpClient _httpClient;
+        private LLMMessageHistory _llmHistory;
+        private const int MAX_LLM_MESSAGES = 2 + 3 * 2;
 
-        private LLMConversation? _llmConversation;
-
-        private const string OLLAMA_API_URL = "http://localhost:11434/api/generate";
+        private const string OLLAMA_API_URL = "http://localhost:11434/api/chat";
         private string OLLAMA_MODEL = "llama3";
-        private const int ROLLING_LLM_WINDOW_SIZE = 3; // initial prompt + 3 last answers
 
         private const string INIT_PROMPT =
             "Vous êtes un commentateur de jeu vidéo.\n" +
@@ -111,6 +123,7 @@ namespace PongLLM
             _logger = logger.ForContext<PongLLMCommentator>();
 
             _httpClient = new HttpClient();
+            _llmHistory = new LLMMessageHistory(MAX_LLM_MESSAGES);
 
             _logger.Information("PongLLMCommentator created with default settings.");
         }
@@ -119,199 +132,73 @@ namespace PongLLM
             Personality = personality;
             _logger.Information("Initializing PongLLMCommentator with PersonalityType: {PersonalityType}", Personality.ToString());
 
-            // Load model
-            bool isModelLoaded = await LoadModelToOllama();
-            if (!isModelLoaded)
-            {
-                _logger.Error("Failed to load the model. Initialization aborted.");
-                return "Initialization failed due to model loading issue.";
-            }
-            _logger.Debug("Initialization {Model} model loaded into memory", OLLAMA_MODEL);
-
-            // define initial prompt and first answer
+            // initial prompt and first answer
             string initialInput = INIT_PROMPT;
-            string initialOutput = await GetOllamaInitialResponse(initialInput);
+            string initialOutput = await GetOllamaResponse(initialInput);
 
             _logger.Debug("Initialization prompt sent: {Prompt}", initialInput);
             _logger.Debug("Initialization response received: {Response}", initialOutput);
 
-            _llmConversation = new LLMConversation(initialInput, initialOutput, Personality, ROLLING_LLM_WINDOW_SIZE);
-
             return initialOutput;
         }
-        private async Task<bool> LoadModelToOllama()
+        private async Task<ChatContext> SendRequest(string url, string userInput)
         {
-            var requestBody = new
+            _llmHistory.AddMessage(new LLMMessage
             {
-                model = OLLAMA_MODEL,
-                prompt = "" // Empty prompt to load the model into memory
+                Role = "user",
+                Content = userInput
+            });
+
+            var requestData = new
+            {
+                model = "llama3",
+                messages = _llmHistory.GetMessages(),
+                stream = false, // assuming you don't want streaming
+                //system = "Max comment length is 20 words. And Your personality is " + Personality.ToString() + "."
             };
 
-            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+            var json = JsonConvert.SerializeObject(requestData);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            try
-            {
-                _logger.Information("Loading model '{Model}' into memory.", OLLAMA_MODEL);
-                HttpResponseMessage response = await _httpClient.PostAsync(OLLAMA_API_URL, content);
-                response.EnsureSuccessStatusCode();
+            var response = await _httpClient.PostAsync(url, content);
+            response.EnsureSuccessStatusCode();
 
-                string responseBody = await response.Content.ReadAsStringAsync();
-                _logger.Information("Model '{Model}' loaded successfully. Response: {ResponseBody}", OLLAMA_MODEL, responseBody);
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var responseChatContext = JsonConvert.DeserializeObject<ChatContext>(responseBody);
 
-                return true;
-            }
-            catch (HttpRequestException e)
+            if (responseChatContext != null)
             {
-                _logger.Error(e, "An error occurred while loading the model '{Model}'.", OLLAMA_MODEL);
-                return false;
+                _llmHistory.AddMessage(responseChatContext.Message);
             }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "An unexpected error occurred while loading the model '{Model}'.");
-                return false;
-            }
+
+            return responseChatContext;
         }
 
-        private string BuildRequestBodyPrompt(string userInput)
-        {
-            _llmConversation.AddInteractionInput(userInput, Personality);
-
-            string requestBodyPrompt =
-                _llmConversation.InitialInteraction.Input + "\n" +
-                //"Your personality is now: "+ _llmConversation.InitialInteraction.Personality.ToString() + "\n" +
-                _llmConversation.InitialInteraction.Output + "\n";
-
-            foreach (LLMInteraction interaction in _llmConversation.InteractionList)
-            {
-                requestBodyPrompt +=
-                    interaction.Input + "\n";
-                    //"Your personality is now: " + interaction.Personality.ToString() + "\n";
-
-                if (interaction != _llmConversation.InteractionList.Last())
-                {
-                    requestBodyPrompt += interaction.Output + "\n";
-                }
-            }
-
-            _logger.Debug("BuildRequestBodyPrompt: {requestBodyPrompt}", requestBodyPrompt);
-
-            return requestBodyPrompt;
-        }
-
-        private async Task<string> GetOllamaInitialResponse(string userInput)
-        {
-            _logger.Information("Processing Ollama Initial response for the request: {Request}", userInput);
-
-            var requestBody = new
-            {
-                model = OLLAMA_MODEL,
-                prompt = userInput,
-                stream = false,
-                //system = "You will follow the orders given (1 phrase comment, max 20 words, in French) and have a " + Personality.ToString() + " personality."
-            };
-
-            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-
-            try
-            {
-                _logger.Debug("Sending HTTP POST request to Ollama API with model: {Model}", OLLAMA_MODEL);
-                HttpResponseMessage response = await _httpClient.PostAsync(OLLAMA_API_URL, content);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
-                var stringResponse = jsonResponse.GetProperty("response").GetString();
-                // Remove all quotes from the string response
-                stringResponse = stringResponse.Replace("\"", "");
-
-                _logger.Information("Received response from Ollama API: {Response}", stringResponse);
-                return stringResponse;
-            }
-            catch (HttpRequestException e)
-            {
-                _logger.Error(e, "An error occurred while making a request to the Ollama API. Request: {RequestBody}", requestBody);
-                return "Sorry, I encountered an error while processing your request.";
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "An unexpected error occurred. Request: {RequestBody}", requestBody);
-                return "An unexpected error occurred.";
-            }
-        }
         public async Task<string> GetOllamaResponse(string userInput)
         {
             _logger.Information("Processing Ollama response for the request: {Request}", userInput);
 
-            string requestBodyPrompt = BuildRequestBodyPrompt(userInput);
-
-            var requestBody = new
-            {
-                model = OLLAMA_MODEL,
-                prompt = requestBodyPrompt,
-                stream = false,
-                //system = "You will follow the orders given (1 phrase comment, max 20 words, in French) and have a " + Personality.ToString() + " personality."
-            };
-
-            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-
             try
             {
                 _logger.Debug("Sending HTTP POST request to Ollama API with model: {Model}", OLLAMA_MODEL);
-                HttpResponseMessage response = await _httpClient.PostAsync(OLLAMA_API_URL, content);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
 
-                var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
-                var stringResponse = jsonResponse.GetProperty("response").GetString();
-                // Remove all quotes from the string response
-                stringResponse = stringResponse.Replace("\"", "");
+                var context = await SendRequest(OLLAMA_API_URL, userInput);
 
-                // Update the conversation history
-                _llmConversation.AddInteractionOutput(stringResponse);
+                string stringResponse = context.Message.Content;
 
                 _logger.Information("Received response from Ollama API: {Response}", stringResponse);
                 return stringResponse;
             }
             catch (HttpRequestException e)
             {
-                _logger.Error(e, "An error occurred while making a request to the Ollama API. Request: {RequestBody}", requestBody);
+                _logger.Error(e, "An error occurred while making a request to the Ollama API. Request: {userInput}", userInput);
                 return "Sorry, I encountered an error while processing your request.";
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "An unexpected error occurred. Request: {RequestBody}", requestBody);
+                _logger.Error(ex, "An unexpected error occurred. Request: {userInput}", userInput);
                 return "An unexpected error occurred.";
             }
         }
-
-        /*private string BuildConversationContext()
-        {
-            StringBuilder conversationBuilder = new StringBuilder();
-            conversationBuilder.AppendLine($"Human: {INIT_PROMPT}");
-            conversationBuilder.AppendLine($"LLM: {_initialResponse}");
-
-            foreach (var exchange in _recentExchanges)
-            {
-                conversationBuilder.AppendLine($"Human: {exchange.userInput}");
-                conversationBuilder.AppendLine($"LLM: {exchange.response}");
-            }
-
-            return conversationBuilder.ToString();
-        }
-
-        private string ExtractUserInput(string conversation)
-        {
-            // Assuming the user input is formatted as "Human: <input>"
-            int start = conversation.LastIndexOf("Human: ") + 7;
-            int end = conversation.IndexOf("\n", start);
-            return conversation.Substring(start, end - start);
-        }
-
-        private string ExtractResponse(string conversation)
-        {
-            // Assuming the response is formatted as "Assistant: <response>"
-            int start = conversation.LastIndexOf("LLM: ") + 11;
-            return conversation.Substring(start).Trim();
-        }*/
     }
 }
