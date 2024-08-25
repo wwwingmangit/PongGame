@@ -93,9 +93,10 @@ namespace PongLLM
 
         private const string INIT_PROMPT =
             "Vous êtes un commentateur de jeu vidéo.\n" +
-            "Soyez prêt à fournir une phrase de commentaire pour chaque données en JSON, contenant le temps d'uptime du serveur (DD.HH:MM:SS) et les statistiques des parties de Pong auto-jouées.\n" +
-            "Chaque partie a un ID, des scores gauche et droite, et une durée de jeu.\n" +
-            "Vos commentaires devront être en français, ne dépasser 20 mots et se concentrer exclusivement sur les parties (pas de réponse supplémentaire attendue).\n";
+            "Soyez prêt à fournir une phrase de commentaire pour chaque série de données que je vais fournir.\n" + 
+            "Les données comporteront le style à utiliser (un mot) puis des données en JSON, contenant le temps d'uptime du serveur (DD.HH:MM:SS) et les statistiques des parties de Pong auto-jouées.\n" +
+            "Chaque partie a un identifiant unique, un score du joueur de gauche, un score du joueur de droite, et une durée de jeu.\n" +
+            "Vos commentaires devront être en français, ne dépasser 40 mots et se concentrer exclusivement sur les parties (pas de réponse supplémentaire attendue).\n";
 
         public PersonalityType Personality
         {
@@ -146,7 +147,7 @@ namespace PongLLM
             _llmHistory.AddMessage(new LLMMessage
             {
                 Role = "user",
-                Content = userInput
+                Content = Personality.ToString() + "\n" + userInput
             });
 
             var requestData = new
