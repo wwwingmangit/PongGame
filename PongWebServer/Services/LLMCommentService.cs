@@ -9,11 +9,19 @@ namespace PongGameServer.Services
         private readonly Serilog.ILogger _logger;
         private readonly PongLLMCommentator _commentator;
 
-        public LLMCommentService(Serilog.ILogger logger)
+        // private constructor.
+        private LLMCommentService(Serilog.ILogger logger, PongLLMCommentator commentator)
         {
             _logger = logger;
-            _commentator = new PongLLMCommentator(_logger);
-            _commentator.Initialize(); // Default initialization
+            _commentator = commentator;
+        }
+
+        // Factory method to create an async constructor that allows us to call the Initialize fonction
+        public static async Task<LLMCommentService> AsyncLLMCommentServiceConstructor(Serilog.ILogger logger)
+        {
+            PongLLMCommentator commentator = new PongLLMCommentator(logger);
+            await commentator.Initialize();
+            return new LLMCommentService(logger, commentator);
         }
 
         public async Task<string> GenerateCommentAsync(object gameStats)
@@ -22,7 +30,7 @@ namespace PongGameServer.Services
             return await _commentator.GetOllamaResponse(statsJson);
         }
 
-        public void SetPersonality(PongLLMCommentator.PersonalityType newPersonality)
+        public void SetPersonality(PongLLM.PersonalityType newPersonality)
         {
             if (_commentator.Personality != newPersonality)
             {

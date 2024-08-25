@@ -1,6 +1,7 @@
 using PongGameServer;
 using PongGameServer.Services;
 using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +13,10 @@ builder.Services.AddSwaggerGen();
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
-    .WriteTo.File("log.txt")
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
     .CreateLogger();
 
 builder.Services.AddSingleton(Log.Logger);
@@ -26,11 +30,19 @@ builder.Services.AddSingleton<GameServer>(serviceProvider =>
 });
 
 // Register LLMCommentService with the logger
-builder.Services.AddSingleton<LLMCommentService>(serviceProvider =>
+/*builder.Services.AddSingleton(async serviceProvider =>
 {
     var logger = serviceProvider.GetRequiredService<Serilog.ILogger>();
-    return new LLMCommentService(logger);
-});
+    return await LLMCommentService.AsyncLLMCommentServiceConstructor(logger);
+});*/
+
+var logger = Log.Logger;
+var llmCommentService = await LLMCommentService.AsyncLLMCommentServiceConstructor(logger);
+
+builder.Services.AddSingleton(llmCommentService);
+
+
+
 
 // This will start the server automatically
 builder.Services.AddHostedService<GameServerHostedService>();
