@@ -73,7 +73,7 @@ public class PongController : ControllerBase
     [HttpPost("setPersonality")]
     public IActionResult SetPersonality([FromForm] string personality)
     {
-        if (Enum.TryParse<PongLLMCommentator.PersonalityType>(personality, true, out var parsedPersonality))
+        if (Enum.TryParse<PongLLM.PersonalityType>(personality, true, out var parsedPersonality))
         {
             _llmCommentService.SetPersonality(parsedPersonality);
             return Ok("Personality updated");

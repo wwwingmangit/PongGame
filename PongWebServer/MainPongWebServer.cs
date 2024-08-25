@@ -12,7 +12,7 @@ builder.Services.AddSwaggerGen();
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
+    .MinimumLevel.Debug()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
     .Enrich.FromLogContext()
     .WriteTo.Console(
@@ -30,11 +30,19 @@ builder.Services.AddSingleton<GameServer>(serviceProvider =>
 });
 
 // Register LLMCommentService with the logger
-builder.Services.AddSingleton<LLMCommentService>(serviceProvider =>
+/*builder.Services.AddSingleton(async serviceProvider =>
 {
     var logger = serviceProvider.GetRequiredService<Serilog.ILogger>();
-    return new LLMCommentService(logger);
-});
+    return await LLMCommentService.AsyncLLMCommentServiceConstructor(logger);
+});*/
+
+var logger = Log.Logger;
+var llmCommentService = await LLMCommentService.AsyncLLMCommentServiceConstructor(logger);
+
+builder.Services.AddSingleton(llmCommentService);
+
+
+
 
 // This will start the server automatically
 builder.Services.AddHostedService<GameServerHostedService>();

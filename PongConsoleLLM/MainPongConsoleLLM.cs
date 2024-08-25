@@ -1,20 +1,28 @@
 ﻿using Serilog;
 using PongLLM;
+using Serilog.Events;
 
 class MainPongConsoleLLM
 {
     static async Task Main(string[] args)
     {
+        //ILogger _logger = new LoggerConfiguration()
+        //                        .MinimumLevel.Debug()
+        //                        .WriteTo.File("log.txt")
+        //                        .CreateLogger();
+
         ILogger _logger = new LoggerConfiguration()
-                                .MinimumLevel.Debug()
-                                .WriteTo.File("log.txt")
-                                .CreateLogger();
+            .MinimumLevel.Information()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .Enrich.FromLogContext()
+            .WriteTo.Console(
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .CreateLogger();
 
         _logger.Information($"Main>>Start");
 
         PongLLMCommentator llm = new PongLLMCommentator(_logger);
-
-        string llmInitResponse = await llm.Initialize(PongLLMCommentator.PersonalityType.Depressed);
+        string llmInitResponse = await llm.Initialize(PongLLM.PersonalityType.Depressed);
 
         Console.Write($"Initialize: ${llmInitResponse}");
 
