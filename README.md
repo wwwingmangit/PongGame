@@ -3,6 +3,10 @@
 This project aims to empower the next generation of programmers by combining traditional programming skills with cutting-edge AI technology. We're sharing our journey, lessons learned, and code in an open-source format.
 This code is part of the project presented on LinkedIn, here: [#1](https://lnkd.in/e5jSZpcz) [#2]( https://lnkd.in/eUxDYXYg) [#3](https://lnkd.in/eu928q_p) [#4](https://www.linkedin.com/posts/emmanuelchriqui_ai-llm-mlops-activity-7233796884396478464-mwT2?utm_source=share&utm_medium=member_desktop) .
 
+https://github.com/user-attachments/assets/df67a9ce-0a56-41bd-b6eb-4edd163252f9
+
+https://github.com/user-attachments/assets/00395126-7497-4737-befa-91dc9ca7b380
+
 ## Project Overview
 
 We started with a classic: Pong. But we didn't stop there! We expanded it into a 3D game, developed a server hosting hundreds of auto-playing Pongs, and incorporated an AI language model to enhance our program. The goal was to have the AI assist us in answering questions, generating ideas, and improving our implementation.
@@ -37,7 +41,6 @@ Our project blended technical knowledge with practical wisdom, focusing on:
     Guided, hands-on experience yields the best results for skill development - by far!
 
     Experienced programmers sharing their expertise accelerates skill growth for both mentors and learners.
-
 
 ## Hashtags
 
