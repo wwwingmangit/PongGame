@@ -21,11 +21,13 @@ Our project blended technical knowledge with practical wisdom, focusing on:
 
     Designing and testing programs
 
-    Experimenting, logging, debugging, and exploring concurrency approaches
+    Prototyping, experimenting, logging, debugging, and exploring concurrency approaches
 
     Delving into core computer science concepts
 
-    Integrating AI technology as a powerful enhancer of programming capabilities
+    Integrating AI assistance as a powerful enhancer of programming capabilities
+
+    And, integrating AI LLM technology in the code to better understand how to maximize AI assistance
 
 
 ## Key Takeaways
